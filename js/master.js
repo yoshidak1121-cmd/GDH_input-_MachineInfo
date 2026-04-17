@@ -15,7 +15,8 @@ async function loadJson(path, fallbackData) {
     const res = await fetch(path);
     if (!res.ok) throw new Error("fetch failed");
     return await res.json();
-  } catch {
+  } catch (error) {
+    console.warn(`マスタ読込に失敗したためフォールバックを使用します: ${path}`, error);
     return fallbackData;
   }
 }

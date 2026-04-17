@@ -2,18 +2,34 @@ function inMaster(value, candidates) {
   return !value || candidates.includes(value);
 }
 
+const memoFieldLabels = {
+  machineMemo: "機械メモ",
+  ncSaleMemo: "NC販売メモ",
+  machineAgencyMemo: "機械代理店メモ",
+  shipmentMemo: "出荷メモ",
+  localDealerMemo: "現地機械販売店メモ",
+  endUserMemo: "エンドユーザメモ",
+  contractMemo: "契約メモ",
+  address: "住所",
+  userNote: "備考",
+};
+
 export function validateRecord(record, masters, records) {
   const errors = [];
 
   if (!record.ncSerial?.trim()) errors.push("NCシリアル番号は必須です。");
   if (!record.contractNumber?.trim()) errors.push("契約番号は必須です。");
 
-  if (record.contractMonths && !/^\d+$/.test(record.contractMonths)) {
-    errors.push("契約期間(月数)は数値のみ入力してください。");
+  if (record.contractMonths) {
+    const monthsText = record.contractMonths.trim();
+    const monthsNumber = Number(monthsText);
+    if (!/^\d+$/.test(monthsText) || !Number.isInteger(monthsNumber) || monthsNumber < 0) {
+      errors.push("契約期間(月数)は0以上の整数で入力してください。");
+    }
   }
 
-  ["machineMemo", "ncSaleMemo", "machineAgencyMemo", "shipmentMemo", "localDealerMemo", "endUserMemo", "contractMemo", "address", "userNote"].forEach((field) => {
-    if ((record[field] || "").length > 300) errors.push(`${field} は300文字以内で入力してください。`);
+  Object.keys(memoFieldLabels).forEach((field) => {
+    if ((record[field] || "").length > 300) errors.push(`${memoFieldLabels[field]}は300文字以内で入力してください。`);
   });
 
   if (!inMaster(record.ncSystemModel, masters.ncSystems.map((x) => x.systemModelName))) errors.push("NCシステム型名が不正です。");

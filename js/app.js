@@ -12,7 +12,13 @@ const copyBtn = document.querySelector("#copy-list-btn");
 const masterRef = document.querySelector("#master-reference");
 
 const records = [];
-let masters;
+let masters = null;
+
+function setMessage(text, type = "error") {
+  errorEl.textContent = text;
+  errorEl.classList.remove("error", "success");
+  if (text) errorEl.classList.add(type);
+}
 
 function updateCurrentView() {
   const record = formToObject(form);
@@ -74,19 +80,19 @@ async function main() {
     const record = formToObject(form);
     const errors = validateRecord(record, masters, records);
     if (errors.length > 0) {
-      errorEl.textContent = errors[0];
+      setMessage(errors[0], "error");
       return;
     }
 
     records.push(record);
     renderRecords(recordsBody, records);
-    errorEl.textContent = "登録しました。";
+    setMessage("登録しました。", "success");
   });
 
   clearBtn.addEventListener("click", () => {
     form.reset();
     applyNcSystemAttributes("");
-    errorEl.textContent = "";
+    setMessage("");
     updateCurrentView();
   });
 
@@ -94,9 +100,9 @@ async function main() {
     const text = recordsToClipboardText(records);
     try {
       await navigator.clipboard.writeText(text);
-      errorEl.textContent = "一覧をクリップボードへコピーしました。";
+      setMessage("一覧をクリップボードへコピーしました。", "success");
     } catch {
-      errorEl.textContent = "コピーに失敗しました。";
+      setMessage("コピーに失敗しました。", "error");
     }
   });
 }

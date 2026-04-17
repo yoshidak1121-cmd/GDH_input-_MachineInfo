@@ -111,9 +111,16 @@ textarea {
 }
 
 #form-error {
-  color: #a10000;
   font-weight: 600;
   min-height: 20px;
+}
+
+#form-error.error {
+  color: #a10000;
+}
+
+#form-error.success {
+  color: #0a6a2f;
 }
 
 table {
