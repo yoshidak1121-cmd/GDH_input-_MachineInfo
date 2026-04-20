@@ -1,0 +1,143 @@
+:root {
+  font-family: "Segoe UI", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+  font-size: 14px;
+}
+
+body {
+  margin: 0;
+  background: #f5f7fb;
+  color: #1e2430;
+}
+
+header, main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12px;
+}
+
+h1, h2 {
+  margin: 4px 0 8px;
+}
+
+details {
+  border: 1px solid #d7dce6;
+  background: #fff;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 8px;
+  background: #eef2f8;
+}
+
+.grid, .sub-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  gap: 6px;
+  padding: 8px;
+}
+
+.sub-grid {
+  border-top: 1px dashed #d7dce6;
+}
+
+.full {
+  grid-column: 1 / -1;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+}
+
+input, select, textarea, button {
+  font: inherit;
+  padding: 6px;
+  border: 1px solid #c7cfdb;
+  border-radius: 4px;
+  background: #fff;
+}
+
+textarea {
+  min-height: 54px;
+  resize: vertical;
+}
+
+.badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  margin-left: 4px;
+}
+
+.badge.required {
+  background: #ffe4e4;
+  color: #a10000;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.sticky-panel {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: #ffffffee;
+  backdrop-filter: blur(2px);
+  border: 1px solid #d7dce6;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  border-bottom: 1px solid #e2e7f0;
+}
+
+.panel-body {
+  max-height: 200px;
+  overflow: auto;
+}
+
+#form-error {
+  font-weight: 600;
+  min-height: 20px;
+}
+
+#form-error.error {
+  color: #a10000;
+}
+
+#form-error.success {
+  color: #0a6a2f;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  background: #fff;
+}
+
+th, td {
+  border: 1px solid #dfe4ee;
+  padding: 4px 6px;
+  text-align: left;
+  vertical-align: top;
+}
+
+@media (max-width: 900px) {
+  .grid, .sub-grid {
+    grid-template-columns: 1fr;
+  }
+}

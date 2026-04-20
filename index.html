@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NCサービス情報登録システム</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header>
+    <h1>NCサービス情報登録システム</h1>
+    <p>各種情報を登録し、入力値をリアルタイムで確認できます。</p>
+  </header>
+
+  <main>
+    <section id="live-summary" class="sticky-panel">
+      <div class="panel-head">
+        <h2>入力値一覧（リアルタイム）</h2>
+        <button type="button" id="copy-list-btn">一覧をコピー</button>
+      </div>
+      <div class="panel-body">
+        <table id="current-values-table">
+          <thead><tr><th>項目</th><th>値</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <form id="registration-form" novalidate>
+      <details open>
+        <summary>1. NC情報 <span class="badge required">必須あり</span></summary>
+        <div class="grid">
+          <label>NCシリアル番号 <span class="badge required">必須</span><input name="ncSerial" required maxlength="100" /></label>
+          <label>NCシステム型名
+            <select name="ncSystemModel"><option value="">選択してください</option></select>
+          </label>
+          <label>NC構成品番号<input name="ncPartNumber" maxlength="100" /></label>
+          <label>NC納入仕様書番号<input name="ncSpecNumber" maxlength="100" /></label>
+        </div>
+        <div class="sub-grid">
+          <label>シリーズ名<input name="seriesName" readonly /></label>
+          <label>機種名<input name="modelName" readonly /></label>
+          <label>NC制御ユニット<input name="controlUnit" readonly /></label>
+          <label>表示ユニット<input name="displayUnit" readonly /></label>
+          <label>表示サイズ_インチ<input name="displaySizeInch" readonly /></label>
+          <label>タッチパネル<input name="touchPanel" readonly /></label>
+        </div>
+      </details>
+
+      <details open>
+        <summary>2. 機械情報</summary>
+        <div class="grid">
+          <label>機械モデル<input name="machineModel" /></label>
+          <label>機械シリアル番号<input name="machineSerial" /></label>
+          <label>機械メーカ
+            <select name="machineMaker"><option value="">選択してください</option></select>
+          </label>
+          <label class="full">機械メモ<textarea name="machineMemo" maxlength="300"></textarea></label>
+        </div>
+      </details>
+
+      <details open>
+        <summary>3. NC販売情報</summary>
+        <div class="grid">
+          <label>NC販売日<input name="ncSaleDate" type="date" /></label>
+          <label>NC販売会社
+            <select name="ncSalesCompany"><option value="">選択してください</option></select>
+          </label>
+          <label class="full">NC販売メモ<textarea name="ncSaleMemo" maxlength="300"></textarea></label>
+        </div>
+      </details>
+
+      <details open>
+        <summary>4. 機械輸出情報</summary>
+        <div class="grid">
+          <label>機械代理店<input name="machineAgency" /></label>
+          <label class="full">機械代理店メモ<textarea name="machineAgencyMemo" maxlength="300"></textarea></label>
+          <label>機械輸出日<input name="machineExportDate" type="date" /></label>
+          <label>機械輸出先
+            <select name="exportCountry"><option value="">選択してください</option></select>
+          </label>
+          <label class="full">出荷メモ<textarea name="shipmentMemo" maxlength="300"></textarea></label>
+        </div>
+      </details>
+
+      <details open>
+        <summary>5. 機械設置情報</summary>
+        <div class="grid">
+          <label>現地機械販売店<input name="localDealer" /></label>
+          <label class="full">現地機械販売店メモ<textarea name="localDealerMemo" maxlength="300"></textarea></label>
+          <label>エンドユーザ<input name="endUser" /></label>
+          <label class="full">エンドユーザメモ<textarea name="endUserMemo" maxlength="300"></textarea></label>
+          <label>設置日<input name="installationDate" type="date" /></label>
+        </div>
+      </details>
+
+      <details open>
+        <summary>6. 契約情報 <span class="badge required">必須あり</span></summary>
+        <div class="grid">
+          <label>ご契約者
+            <select name="contractCustomerType">
+              <option value="">選択してください</option>
+              <option value="MTB">MTB</option>
+              <option value="Dealer">Dealer</option>
+              <option value="EndUser">EndUser</option>
+            </select>
+          </label>
+          <label>三菱契約受託会社
+            <select name="contractCompany"><option value="">選択してください</option></select>
+          </label>
+          <label>三菱サービス拠点
+            <select name="serviceBase"><option value="">選択してください</option></select>
+          </label>
+          <label>契約番号 <span class="badge required">必須</span><input name="contractNumber" required /></label>
+          <label>契約タイプ
+            <select name="contractType">
+              <option value="">選択してください</option>
+              <option value="FULL">FULL</option>
+              <option value="PARTS">PARTS</option>
+              <option value="EWC">EWC</option>
+            </select>
+          </label>
+          <label for="contractMonths">契約期間(月数)
+            <input id="contractMonths" name="contractMonths" type="number" min="0" step="1" inputmode="numeric" />
+          </label>
+          <label>契約開始日<input name="contractStartDate" type="date" /></label>
+          <label class="full">契約メモ<textarea name="contractMemo" maxlength="300"></textarea></label>
+        </div>
+      </details>
+
+      <details>
+        <summary>7. ユーザ情報（将来拡張）</summary>
+        <div class="grid">
+          <label>ユーザID<input name="userId" /></label>
+          <label>ユーザ種別
+            <select name="userType">
+              <option value="">選択してください</option>
+              <option value="MTB">MTB</option>
+              <option value="Dealer">Dealer</option>
+              <option value="EndUser">EndUser</option>
+              <option value="Mitsubishi">Mitsubishi</option>
+            </select>
+          </label>
+          <label>会社名<input name="companyName" /></label>
+          <label>部署名<input name="departmentName" /></label>
+          <label>担当者名<input name="contactName" /></label>
+          <label>メールアドレス<input name="email" type="email" /></label>
+          <label>電話番号<input name="phone" /></label>
+          <label>国
+            <select name="userCountry"><option value="">選択してください</option></select>
+          </label>
+          <label class="full">住所<textarea name="address" maxlength="300"></textarea></label>
+          <label class="full">備考<textarea name="userNote" maxlength="300"></textarea></label>
+        </div>
+      </details>
+
+      <div class="actions">
+        <button type="submit">登録</button>
+        <button type="button" id="clear-btn">クリア</button>
+      </div>
+      <p id="form-error" role="alert"></p>
+    </form>
+
+    <section>
+      <h2>登録済み一覧（SCR-02）</h2>
+      <table id="records-table">
+        <thead>
+          <tr>
+            <th>#</th><th>NCシリアル番号</th><th>NCシステム型名</th><th>機械シリアル番号</th><th>エンドユーザ</th><th>契約番号</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>マスタ参照（SCR-03）</h2>
+      <div id="master-reference"></div>
+    </section>
+  </main>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
