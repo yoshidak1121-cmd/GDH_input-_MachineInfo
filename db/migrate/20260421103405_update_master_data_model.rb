@@ -36,22 +36,22 @@ class UpdateMasterDataModel < ActiveRecord::Migration[6.0]
   def ensure_company_roles
     return unless table_exists?(:companies)
 
-    unless table_exists?(:company_roles)
+    if table_exists?(:company_roles)
+      add_column :company_roles, :company_id, :bigint unless column_exists?(:company_roles, :company_id)
+      add_column :company_roles, :role_type, :string unless column_exists?(:company_roles, :role_type)
+
+      change_column_null :company_roles, :company_id, false if column_exists?(:company_roles, :company_id)
+      change_column_null :company_roles, :role_type, false if column_exists?(:company_roles, :role_type)
+
+      unless foreign_key_exists?(:company_roles, :companies, column: :company_id)
+        add_foreign_key :company_roles, :companies, column: :company_id
+      end
+    else
       create_table :company_roles do |t|
         t.references :company, null: false, foreign_key: true
         t.string :role_type, null: false
         t.timestamps
       end
-    end
-
-    add_column :company_roles, :company_id, :bigint unless column_exists?(:company_roles, :company_id)
-    add_column :company_roles, :role_type, :string unless column_exists?(:company_roles, :role_type)
-
-    change_column_null :company_roles, :company_id, false if column_exists?(:company_roles, :company_id)
-    change_column_null :company_roles, :role_type, false if column_exists?(:company_roles, :role_type)
-
-    unless foreign_key_exists?(:company_roles, :companies, column: :company_id)
-      add_foreign_key :company_roles, :companies, column: :company_id
     end
 
     unless index_exists?(:company_roles, [:company_id, :role_type], unique: true, name: 'index_company_roles_on_company_id_and_role_type')
