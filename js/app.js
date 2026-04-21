@@ -16,6 +16,7 @@ const masterRef = document.querySelector("#master-reference");
 
 const records = [];
 let masters = null;
+const USER_FIELDS = ["userType", "companyName", "departmentName", "contactName", "email", "phone", "userCountry", "address"];
 
 function setMessage(text, type = "error") {
   errorEl.textContent = text;
@@ -69,7 +70,7 @@ function applyUserAttributes(userId) {
   const set = (name, value = "") => { form.elements[name].value = value; };
 
   if (!user) {
-    ["userType", "companyName", "departmentName", "contactName", "email", "phone", "userCountry", "address"].forEach((f) => set(f, ""));
+    USER_FIELDS.forEach((f) => set(f, ""));
     return;
   }
 
@@ -85,6 +86,7 @@ function applyUserAttributes(userId) {
 
 function setLiveSummaryVisible(visible, announce = true) {
   liveSummaryBody.hidden = !visible;
+  liveSummaryBody.setAttribute("aria-hidden", visible ? "false" : "true");
   toggleLiveSummaryBtn.textContent = visible ? "折りたたむ" : "一覧を表示";
   toggleLiveSummaryBtn.setAttribute("aria-expanded", visible ? "true" : "false");
   if (announce) liveSummaryStatus.textContent = visible ? "入力値一覧を表示しました。" : "入力値一覧を折りたたみました。";

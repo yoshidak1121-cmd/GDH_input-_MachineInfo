@@ -1,6 +1,7 @@
 :root {
   font-family: "Segoe UI", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
   font-size: 14px;
+  --summary-panel-width: 320px;
 }
 
 body {
@@ -17,7 +18,7 @@ header, main {
 
 main {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-columns: minmax(0, 1fr) var(--summary-panel-width);
   gap: 12px;
   align-items: start;
 }
