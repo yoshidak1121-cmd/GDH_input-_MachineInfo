@@ -63,7 +63,7 @@ function onInstallationDateChange() {
 
 function setLiveSummaryVisible(visible) {
   liveSummaryBody.hidden = !visible;
-  toggleLiveSummaryBtn.textContent = visible ? "折りたたむ" : "表示";
+  toggleLiveSummaryBtn.textContent = visible ? "折りたたむ" : "一覧を表示";
   toggleLiveSummaryBtn.setAttribute("aria-expanded", visible ? "true" : "false");
 }
 
