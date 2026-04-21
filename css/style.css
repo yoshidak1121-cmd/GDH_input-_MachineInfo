@@ -15,6 +15,13 @@ header, main {
   padding: 12px;
 }
 
+main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 12px;
+  align-items: start;
+}
+
 h1, h2 {
   margin: 4px 0 8px;
 }
@@ -88,13 +95,22 @@ textarea {
 
 .sticky-panel {
   position: sticky;
-  top: 0;
+  top: 12px;
   z-index: 3;
   background: #ffffffee;
   backdrop-filter: blur(2px);
   border: 1px solid #d7dce6;
   border-radius: 6px;
   margin-bottom: 8px;
+}
+
+#live-summary {
+  grid-column: 2;
+}
+
+#registration-form,
+main > section:not(#live-summary) {
+  grid-column: 1;
 }
 
 .panel-head {
@@ -154,6 +170,10 @@ th, td {
 }
 
 @media (max-width: 900px) {
+  main {
+    display: block;
+  }
+
   .grid, .sub-grid {
     grid-template-columns: 1fr;
   }

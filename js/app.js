@@ -11,6 +11,7 @@ const clearBtn = document.querySelector("#clear-btn");
 const copyBtn = document.querySelector("#copy-list-btn");
 const liveSummaryBody = document.querySelector("#live-summary-body");
 const toggleLiveSummaryBtn = document.querySelector("#toggle-live-summary-btn");
+const liveSummaryStatus = document.querySelector("#live-summary-status");
 const masterRef = document.querySelector("#master-reference");
 
 const records = [];
@@ -50,6 +51,8 @@ function bindMasterOptions() {
   fillSelect(form.elements.ncSalesCompany, masters.salesCompanies);
   fillSelect(form.elements.exportCountry, masters.countries);
   fillSelect(form.elements.userCountry, masters.countries);
+  fillSelect(form.elements.userId, masters.users, (u) => ({ value: u.userId, label: `${u.userId} / ${u.contactName}` }));
+  fillSelect(form.elements.userType, [...new Set(masters.users.map((u) => u.userType))]);
   fillSelect(form.elements.serviceBase, masters.serviceBases);
   fillSelect(form.elements.contractCompany, [...masters.salesCompanies, ...masters.serviceBases]);
   renderMasterReference(masterRef, masters);
@@ -61,17 +64,37 @@ function onInstallationDateChange() {
   }
 }
 
-function setLiveSummaryVisible(visible) {
+function applyUserAttributes(userId) {
+  const user = masters.users.find((x) => x.userId === userId);
+  const set = (name, value = "") => { form.elements[name].value = value; };
+
+  if (!user) {
+    ["userType", "companyName", "departmentName", "contactName", "email", "phone", "userCountry", "address"].forEach((f) => set(f, ""));
+    return;
+  }
+
+  set("userType", user.userType);
+  set("companyName", user.companyName);
+  set("departmentName", user.departmentName);
+  set("contactName", user.contactName);
+  set("email", user.email);
+  set("phone", user.phone);
+  set("userCountry", user.country);
+  set("address", user.address);
+}
+
+function setLiveSummaryVisible(visible, announce = true) {
   liveSummaryBody.hidden = !visible;
   toggleLiveSummaryBtn.textContent = visible ? "折りたたむ" : "一覧を表示";
   toggleLiveSummaryBtn.setAttribute("aria-expanded", visible ? "true" : "false");
+  if (announce) liveSummaryStatus.textContent = visible ? "入力値一覧を表示しました。" : "入力値一覧を折りたたみました。";
 }
 
 async function main() {
   masters = await loadMasters();
   bindMasterOptions();
   updateCurrentView();
-  setLiveSummaryVisible(false);
+  setLiveSummaryVisible(false, false);
 
   form.addEventListener("input", updateCurrentView);
   form.elements.ncSystemModel.addEventListener("change", (e) => {
@@ -81,6 +104,11 @@ async function main() {
 
   form.elements.installationDate.addEventListener("change", () => {
     onInstallationDateChange();
+    updateCurrentView();
+  });
+
+  form.elements.userId.addEventListener("change", (e) => {
+    applyUserAttributes(e.target.value);
     updateCurrentView();
   });
 
@@ -101,6 +129,7 @@ async function main() {
   clearBtn.addEventListener("click", () => {
     form.reset();
     applyNcSystemAttributes("");
+    applyUserAttributes("");
     setMessage("");
     updateCurrentView();
   });

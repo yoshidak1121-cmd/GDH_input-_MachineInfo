@@ -31,6 +31,7 @@ export function renderMasterReference(target, masters) {
     ["サービス拠点マスタ", masters.serviceBases],
     ["国マスタ", masters.countries],
     ["MTBマスタ", masters.mtb],
+    ["ユーザマスタ", masters.users.map((u) => `${u.userId} / ${u.userType} / ${u.companyName} / ${u.contactName}`)],
   ];
 
   target.innerHTML = chunks.map(([title, rows]) => `

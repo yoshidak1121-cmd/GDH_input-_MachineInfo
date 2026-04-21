@@ -1,0 +1,46 @@
+[
+  {
+    "userId": "U001",
+    "userType": "MTB",
+    "companyName": "DMG MORI",
+    "departmentName": "製造技術部",
+    "contactName": "山田 太郎",
+    "email": "taro.yamada@example.com",
+    "phone": "+81-3-1111-2222",
+    "country": "JP",
+    "address": "東京都千代田区1-1-1"
+  },
+  {
+    "userId": "U002",
+    "userType": "Dealer",
+    "companyName": "Global Machines GmbH",
+    "departmentName": "Sales",
+    "contactName": "Anna Müller",
+    "email": "anna.mueller@example.com",
+    "phone": "+49-69-5555-0101",
+    "country": "DE",
+    "address": "Mainzer Landstraße 10, Frankfurt"
+  },
+  {
+    "userId": "U003",
+    "userType": "EndUser",
+    "companyName": "ABC Precision",
+    "departmentName": "工場管理課",
+    "contactName": "鈴木 一郎",
+    "email": "ichiro.suzuki@example.com",
+    "phone": "+81-52-3333-4444",
+    "country": "JP",
+    "address": "愛知県名古屋市中区2-2-2"
+  },
+  {
+    "userId": "U004",
+    "userType": "Mitsubishi",
+    "companyName": "Mitsubishi Electric",
+    "departmentName": "Service Division",
+    "contactName": "John Smith",
+    "email": "john.smith@example.com",
+    "phone": "+1-312-555-7878",
+    "country": "US",
+    "address": "200 N LaSalle St, Chicago"
+  }
+]
