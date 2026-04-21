@@ -105,8 +105,13 @@ textarea {
   border-bottom: 1px solid #e2e7f0;
 }
 
+.panel-actions {
+  display: flex;
+  gap: 6px;
+}
+
 .panel-body {
-  max-height: 200px;
+  max-height: 160px;
   overflow: auto;
 }
 

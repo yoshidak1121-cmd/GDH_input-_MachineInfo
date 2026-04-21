@@ -9,6 +9,8 @@ const recordsBody = document.querySelector("#records-table tbody");
 const errorEl = document.querySelector("#form-error");
 const clearBtn = document.querySelector("#clear-btn");
 const copyBtn = document.querySelector("#copy-list-btn");
+const liveSummaryBody = document.querySelector("#live-summary-body");
+const toggleLiveSummaryBtn = document.querySelector("#toggle-live-summary-btn");
 const masterRef = document.querySelector("#master-reference");
 
 const records = [];
@@ -59,10 +61,17 @@ function onInstallationDateChange() {
   }
 }
 
+function setLiveSummaryVisible(visible) {
+  liveSummaryBody.hidden = !visible;
+  toggleLiveSummaryBtn.textContent = visible ? "折りたたむ" : "表示";
+  toggleLiveSummaryBtn.setAttribute("aria-expanded", visible ? "true" : "false");
+}
+
 async function main() {
   masters = await loadMasters();
   bindMasterOptions();
   updateCurrentView();
+  setLiveSummaryVisible(false);
 
   form.addEventListener("input", updateCurrentView);
   form.elements.ncSystemModel.addEventListener("change", (e) => {
@@ -104,6 +113,10 @@ async function main() {
     } catch {
       setMessage("コピーに失敗しました。", "error");
     }
+  });
+
+  toggleLiveSummaryBtn.addEventListener("click", () => {
+    setLiveSummaryVisible(liveSummaryBody.hidden);
   });
 }
 
