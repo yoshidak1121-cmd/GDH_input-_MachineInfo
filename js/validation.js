@@ -39,8 +39,8 @@ export function validateRecord(record, masters, records) {
   if (!inMaster(record.userCountry, masters.countries)) errors.push("ユーザ国が不正です。");
   if (!inMaster(record.serviceBase, masters.serviceBases)) errors.push("三菱サービス拠点が不正です。");
   if (!inMaster(record.contractCompany, [...masters.salesCompanies, ...masters.serviceBases])) errors.push("三菱契約受託会社が不正です。");
-  if (!inMaster(record.userId, masters.users.map((x) => x.userId))) errors.push("ユーザIDが不正です。");
-  if (!inMaster(record.userType, [...new Set(masters.users.map((x) => x.userType))])) errors.push("ユーザ種別が不正です。");
+  if (!inMaster(record.userId, masters.userIds)) errors.push("ユーザIDが不正です。");
+  if (!inMaster(record.userType, masters.userTypes)) errors.push("ユーザ種別が不正です。");
 
   if (records.some((r) => r.ncSerial === record.ncSerial)) {
     errors.push("NCシリアル番号が重複しています。");

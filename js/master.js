@@ -62,5 +62,7 @@ export async function loadMasters() {
     countries,
     mtb,
     users,
+    userIds: users.map((u) => u.userId),
+    userTypes: [...new Set(users.map((u) => u.userType))],
   };
 }

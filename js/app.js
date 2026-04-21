@@ -53,7 +53,7 @@ function bindMasterOptions() {
   fillSelect(form.elements.exportCountry, masters.countries);
   fillSelect(form.elements.userCountry, masters.countries);
   fillSelect(form.elements.userId, masters.users, (u) => ({ value: u.userId, label: `${u.userId} / ${u.contactName}` }));
-  fillSelect(form.elements.userType, [...new Set(masters.users.map((u) => u.userType))]);
+  fillSelect(form.elements.userType, masters.userTypes);
   fillSelect(form.elements.serviceBase, masters.serviceBases);
   fillSelect(form.elements.contractCompany, [...masters.salesCompanies, ...masters.serviceBases]);
   renderMasterReference(masterRef, masters);
