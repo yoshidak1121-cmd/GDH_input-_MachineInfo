@@ -1,6 +1,4 @@
 class UpdateMasterDataModel < ActiveRecord::Migration[6.0]
-  ROLE_TYPES = %w[NC_SALES NC_SERVICE END_CUSTOMER AGENT MAKER].freeze
-
   def up
     remove_sites
     ensure_companies_company_category
@@ -61,7 +59,6 @@ class UpdateMasterDataModel < ActiveRecord::Migration[6.0]
     end
 
     # role_type candidates: NC_SALES, NC_SERVICE, END_CUSTOMER, AGENT, MAKER
-    ROLE_TYPES
   end
 
   def ensure_users_company_and_address
@@ -69,6 +66,14 @@ class UpdateMasterDataModel < ActiveRecord::Migration[6.0]
 
     add_reference :users, :company, foreign_key: true unless column_exists?(:users, :company_id)
     add_reference :users, :address, foreign_key: true unless column_exists?(:users, :address_id)
+
+    if column_exists?(:users, :company_id) && table_exists?(:companies) && !foreign_key_exists?(:users, :companies, column: :company_id)
+      add_foreign_key :users, :companies, column: :company_id
+    end
+
+    if column_exists?(:users, :address_id) && table_exists?(:addresses) && !foreign_key_exists?(:users, :addresses, column: :address_id)
+      add_foreign_key :users, :addresses, column: :address_id
+    end
 
     fill_users_company_id_if_null
     fill_users_address_id_if_null
@@ -85,7 +90,7 @@ class UpdateMasterDataModel < ActiveRecord::Migration[6.0]
 
     execute <<~SQL
       UPDATE users
-      SET company_id = #{company_id}
+      SET company_id = #{connection.quote(company_id)}
       WHERE company_id IS NULL
     SQL
   end
@@ -98,7 +103,7 @@ class UpdateMasterDataModel < ActiveRecord::Migration[6.0]
 
     execute <<~SQL
       UPDATE users
-      SET address_id = #{address_id}
+      SET address_id = #{connection.quote(address_id)}
       WHERE address_id IS NULL
     SQL
   end
