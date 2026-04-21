@@ -1,4 +1,6 @@
 class UpdateMasterDataModel < ActiveRecord::Migration[6.0]
+  COMPANY_ROLES_UNIQUE_INDEX = 'index_company_roles_on_company_id_and_role_type'.freeze
+
   def up
     remove_sites
     ensure_companies_company_category
@@ -23,13 +25,17 @@ class UpdateMasterDataModel < ActiveRecord::Migration[6.0]
       add_column :companies, :company_category, :string, default: 'CUSTOMER'
     end
 
-    execute <<~SQL
-      UPDATE companies
-      SET company_category = 'CUSTOMER'
-      WHERE company_category IS NULL
-    SQL
+    has_null = select_value('SELECT EXISTS(SELECT 1 FROM companies WHERE company_category IS NULL LIMIT 1)')
+    if ActiveRecord::Type::Boolean.new.cast(has_null)
+      execute <<~SQL
+        UPDATE companies
+        SET company_category = 'CUSTOMER'
+        WHERE company_category IS NULL
+      SQL
+    end
 
-    change_column_default :companies, :company_category, from: nil, to: 'CUSTOMER'
+    column = connection.columns(:companies).find { |c| c.name == 'company_category' }
+    change_column_default(:companies, :company_category, 'CUSTOMER') if column&.default != 'CUSTOMER'
     change_column_null :companies, :company_category, false
   end
 
@@ -49,16 +55,14 @@ class UpdateMasterDataModel < ActiveRecord::Migration[6.0]
     else
       create_table :company_roles do |t|
         t.references :company, null: false, foreign_key: true
-        t.string :role_type, null: false
+        t.string :role_type, null: false # NC_SALES, NC_SERVICE, END_CUSTOMER, AGENT, MAKER
         t.timestamps
       end
     end
 
-    unless index_exists?(:company_roles, [:company_id, :role_type], unique: true, name: 'index_company_roles_on_company_id_and_role_type')
-      add_index :company_roles, [:company_id, :role_type], unique: true, name: 'index_company_roles_on_company_id_and_role_type'
+    unless index_exists?(:company_roles, [:company_id, :role_type], unique: true, name: COMPANY_ROLES_UNIQUE_INDEX)
+      add_index :company_roles, [:company_id, :role_type], unique: true, name: COMPANY_ROLES_UNIQUE_INDEX
     end
-
-    # role_type candidates: NC_SALES, NC_SERVICE, END_CUSTOMER, AGENT, MAKER
   end
 
   def ensure_users_company_and_address
@@ -75,36 +79,28 @@ class UpdateMasterDataModel < ActiveRecord::Migration[6.0]
       add_foreign_key :users, :addresses, column: :address_id
     end
 
-    fill_users_company_id_if_null
-    fill_users_address_id_if_null
+    assert_no_null_users_company_id
+    assert_no_null_users_address_id
 
     change_column_null :users, :company_id, false if column_exists?(:users, :company_id)
     change_column_null :users, :address_id, false if column_exists?(:users, :address_id)
   end
 
-  def fill_users_company_id_if_null
-    return unless table_exists?(:companies)
+  def assert_no_null_users_company_id
+    return unless column_exists?(:users, :company_id)
 
-    company_id = select_value('SELECT id FROM companies ORDER BY id ASC LIMIT 1')
-    return if company_id.nil?
+    has_null = select_value('SELECT EXISTS(SELECT 1 FROM users WHERE company_id IS NULL LIMIT 1)')
+    return unless ActiveRecord::Type::Boolean.new.cast(has_null)
 
-    execute <<~SQL
-      UPDATE users
-      SET company_id = #{connection.quote(company_id)}
-      WHERE company_id IS NULL
-    SQL
+    raise ActiveRecord::IrreversibleMigration, 'Cannot set users.company_id to NOT NULL while NULL values exist. Backfill data first.'
   end
 
-  def fill_users_address_id_if_null
-    return unless table_exists?(:addresses)
+  def assert_no_null_users_address_id
+    return unless column_exists?(:users, :address_id)
 
-    address_id = select_value('SELECT id FROM addresses ORDER BY id ASC LIMIT 1')
-    return if address_id.nil?
+    has_null = select_value('SELECT EXISTS(SELECT 1 FROM users WHERE address_id IS NULL LIMIT 1)')
+    return unless ActiveRecord::Type::Boolean.new.cast(has_null)
 
-    execute <<~SQL
-      UPDATE users
-      SET address_id = #{connection.quote(address_id)}
-      WHERE address_id IS NULL
-    SQL
+    raise ActiveRecord::IrreversibleMigration, 'Cannot set users.address_id to NOT NULL while NULL values exist. Backfill data first.'
   end
 end
