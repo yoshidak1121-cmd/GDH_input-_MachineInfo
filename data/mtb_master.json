@@ -1,6 +1,10 @@
 [
-  "DMG MORI",
-  "MAZAK",
-  "OKUMA",
-  "牧野フライス"
+  {"code":"DMGMORI","display_name":"DMG MORI","is_active":true,"display_order":1},
+  {"code":"MAZAK","display_name":"MAZAK","is_active":true,"display_order":2},
+  {"code":"OKUMA","display_name":"OKUMA","is_active":true,"display_order":3},
+  {"code":"MAKINO","display_name":"牧野フライス","is_active":true,"display_order":4},
+  {"code":"FANUC","display_name":"FANUC","is_active":true,"display_order":5},
+  {"code":"HAAS","display_name":"Haas Automation","is_active":true,"display_order":6},
+  {"code":"DOOSAN","display_name":"Doosan Machine Tools","is_active":true,"display_order":7},
+  {"code":"HWACHEON","display_name":"Hwacheon","is_active":true,"display_order":8}
 ]

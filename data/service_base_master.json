@@ -1,6 +1,16 @@
 [
-  "Tokyo Service",
-  "Nagoya Service",
-  "Frankfurt Service",
-  "Chicago Service"
+  {"code":"MEAU","display_name":"MEAU (Australia)","is_active":true,"can_be_contract_owner":true,"company_type":"SERVICE","display_order":1},
+  {"code":"MEB","display_name":"MEB (Belgium/Europe)","is_active":true,"can_be_contract_owner":true,"company_type":"SERVICE","display_order":2},
+  {"code":"MEU","display_name":"MEU (USA)","is_active":true,"can_be_contract_owner":true,"company_type":"SERVICE","display_order":3},
+  {"code":"MEACH","display_name":"MEACH (China)","is_active":true,"can_be_contract_owner":true,"company_type":"SERVICE","display_order":4},
+  {"code":"MEAK","display_name":"MEAK (Korea)","is_active":true,"can_be_contract_owner":true,"company_type":"SERVICE","display_order":5},
+  {"code":"MEAP","display_name":"MEAP (Asia Pacific)","is_active":true,"can_be_contract_owner":true,"company_type":"SERVICE","display_order":6},
+  {"code":"MESM","display_name":"MESM (Southeast Asia)","is_active":true,"can_be_contract_owner":true,"company_type":"SERVICE","display_order":7},
+  {"code":"MEVN","display_name":"MEVN (Vietnam)","is_active":true,"can_be_contract_owner":true,"company_type":"SERVICE","display_order":8},
+  {"code":"MEIN","display_name":"MEIN (India)","is_active":true,"can_be_contract_owner":true,"company_type":"SERVICE","display_order":9},
+  {"code":"ME-TWN","display_name":"ME-TWN (Taiwan)","is_active":true,"can_be_contract_owner":true,"company_type":"SERVICE","display_order":10},
+  {"code":"MMEG","display_name":"MMEG (Germany)","is_active":true,"can_be_contract_owner":true,"company_type":"SERVICE","display_order":11},
+  {"code":"MELAP","display_name":"MELAP (Latin America Pacific)","is_active":true,"can_be_contract_owner":true,"company_type":"SERVICE","display_order":12},
+  {"code":"MEAUST","display_name":"MEAUST (Austria)","is_active":true,"can_be_contract_owner":true,"company_type":"SERVICE","display_order":13},
+  {"code":"MEI","display_name":"MEI (Italy)","is_active":true,"can_be_contract_owner":true,"company_type":"SERVICE","display_order":14}
 ]

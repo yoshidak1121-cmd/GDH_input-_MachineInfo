@@ -1,8 +1,22 @@
 [
-  "JP",
-  "US",
-  "DE",
-  "CN",
-  "TH",
-  "IN"
+  {"code":"JP","display_name":"日本","is_active":true,"display_order":1},
+  {"code":"US","display_name":"アメリカ合衆国","is_active":true,"display_order":2},
+  {"code":"DE","display_name":"ドイツ","is_active":true,"display_order":3},
+  {"code":"CN","display_name":"中国","is_active":true,"display_order":4},
+  {"code":"TH","display_name":"タイ","is_active":true,"display_order":5},
+  {"code":"IN","display_name":"インド","is_active":true,"display_order":6},
+  {"code":"KR","display_name":"韓国","is_active":true,"display_order":7},
+  {"code":"TW","display_name":"台湾","is_active":true,"display_order":8},
+  {"code":"AU","display_name":"オーストラリア","is_active":true,"display_order":9},
+  {"code":"VN","display_name":"ベトナム","is_active":true,"display_order":10},
+  {"code":"IT","display_name":"イタリア","is_active":true,"display_order":11},
+  {"code":"FR","display_name":"フランス","is_active":true,"display_order":12},
+  {"code":"GB","display_name":"英国","is_active":true,"display_order":13},
+  {"code":"MX","display_name":"メキシコ","is_active":true,"display_order":14},
+  {"code":"BR","display_name":"ブラジル","is_active":true,"display_order":15},
+  {"code":"BE","display_name":"ベルギー","is_active":true,"display_order":16},
+  {"code":"AT","display_name":"オーストリア","is_active":true,"display_order":17},
+  {"code":"SG","display_name":"シンガポール","is_active":true,"display_order":18},
+  {"code":"MY","display_name":"マレーシア","is_active":true,"display_order":19},
+  {"code":"ID","display_name":"インドネシア","is_active":true,"display_order":20}
 ]
