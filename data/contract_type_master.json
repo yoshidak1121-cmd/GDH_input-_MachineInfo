@@ -1,0 +1,5 @@
+[
+  {"code":"FULL","display_name":"FULL","description":"フル契約","standard_period_month":24,"is_active":true,"display_order":1},
+  {"code":"PARTS","display_name":"PARTS","description":"パーツ契約","standard_period_month":24,"is_active":true,"display_order":2},
+  {"code":"EWC","display_name":"EWC","description":"延長保証契約","standard_period_month":12,"is_active":true,"display_order":3}
+]

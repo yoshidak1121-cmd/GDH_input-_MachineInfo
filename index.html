@@ -7,178 +7,388 @@
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <header>
-    <h1>NCサービス情報登録システム</h1>
-    <p>各種情報を登録し、入力値をリアルタイムで確認できます。</p>
-  </header>
 
-  <main>
-    <section id="live-summary" class="sticky-panel">
-      <div class="panel-head">
-        <h2>入力値一覧（リアルタイム）</h2>
-        <button type="button" id="copy-list-btn">一覧をコピー</button>
-      </div>
-      <div class="panel-body">
-        <table id="current-values-table">
-          <thead><tr><th>項目</th><th>値</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </section>
+<header>
+  <h1>🔧 NCサービス情報登録システム</h1>
+  <nav>
+    <button id="nav-list">一覧・検索</button>
+    <button id="nav-drafts">下書き一覧</button>
+    <button id="nav-masters">マスタ管理</button>
+  </nav>
+</header>
 
-    <form id="registration-form" novalidate>
-      <details open>
-        <summary>1. NC情報 <span class="badge required">必須あり</span></summary>
+<main>
+
+<!-- ============================================================
+     S01: 一覧・検索画面
+     ============================================================ -->
+<section id="screen-s01" class="screen active">
+  <div class="screen-header">
+    <h2>一覧・検索画面</h2>
+    <div class="screen-header-actions">
+      <button id="btn-new-reg" class="btn-primary">＋ 新規登録</button>
+      <button id="btn-drafts-nav">下書き一覧</button>
+    </div>
+  </div>
+
+  <div class="search-panel">
+    <div class="search-fields">
+      <label>NCシリアル番号<input id="search-serial" type="text" placeholder="部分一致" /></label>
+      <label>NCシステム型名<select id="search-model"><option value="">（全て）</option></select></label>
+      <label>登録ステータス
+        <select id="search-status">
+          <option value="">（全て）</option>
+          <option>下書き</option>
+          <option>基本情報登録済み</option>
+          <option>設置情報登録済み</option>
+          <option>契約情報登録済み</option>
+          <option>契約未登録</option>
+          <option>要確認</option>
+          <option>登録完了</option>
+        </select>
+      </label>
+      <label>エンドユーザ<input id="search-enduser" type="text" placeholder="部分一致" /></label>
+    </div>
+    <button id="btn-search" class="btn-primary">検索</button>
+    <button id="btn-clear-search">クリア</button>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>NCシリアル番号</th><th>NCシステム型名</th><th>機械メーカ</th>
+          <th>機械モデル</th><th>エンドユーザ</th><th>NC販売会社</th>
+          <th>設置日</th><th>契約</th><th>ステータス</th><th>最終更新</th><th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="s01-tbody"></tbody>
+    </table>
+    <p id="s01-empty" class="no-data" style="display:none">登録データがありません。新規登録ボタンで始めてください。</p>
+  </div>
+</section>
+
+<!-- ============================================================
+     S02: 新規登録開始画面
+     ============================================================ -->
+<section id="screen-s02" class="screen">
+  <h2>新規登録開始</h2>
+  <div class="start-form">
+    <p>まずNCシリアル番号を入力してください。<br>シリアル番号だけでも下書き保存できます。</p>
+    <label>NCシリアル番号 <span class="badge required">必須</span>
+      <input id="s02-serial" type="text" maxlength="60" placeholder="例: SN-2024-001" />
+    </label>
+    <div id="s02-error" class="messages-box"></div>
+    <div style="display:flex; gap:8px; margin-top:12px;">
+      <button id="s02-back">← 戻る</button>
+      <button id="s02-next" class="btn-primary">次へ（基本情報登録）→</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     Wizard: S03 / S04 / S05 / S06
+     ============================================================ -->
+<section id="screen-wizard" class="screen">
+
+  <!-- Step indicator -->
+  <div class="step-indicator" id="step-indicator">
+    <div class="step-item current" data-step="1">
+      <span class="step-num">1</span>NC基本情報
+    </div>
+    <span class="step-sep">›</span>
+    <div class="step-item future" data-step="2">
+      <span class="step-num">2</span>輸出・設置情報
+    </div>
+    <span class="step-sep">›</span>
+    <div class="step-item future" data-step="3">
+      <span class="step-num">3</span>契約情報
+    </div>
+    <span class="step-sep">›</span>
+    <div class="step-item future" data-step="4">
+      <span class="step-num">4</span>確認
+    </div>
+  </div>
+
+  <!-- ---- Step 1: S03 基本情報 ---- -->
+  <div id="step-1" class="wizard-step active">
+    <div class="screen-header">
+      <h2>基本情報登録 <small id="s03-serial-display" style="color:#0055aa;font-size:14px;"></small></h2>
+    </div>
+    <div id="step1-messages" class="messages-box"></div>
+
+    <form id="form-step1" novalidate>
+
+      <!-- NC情報 -->
+      <div class="field-group">
+        <h4>● NC情報</h4>
         <div class="grid">
-          <label>NCシリアル番号 <span class="badge required">必須</span><input name="ncSerial" required maxlength="100" /></label>
+          <label>NCシリアル番号
+            <input value="" readonly id="s03-serial-display-input" name="__serial_display"
+                   style="background:#f0f2f6;color:#555;" />
+          </label>
           <label>NCシステム型名
-            <select name="ncSystemModel"><option value="">選択してください</option></select>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <select name="nc_system_model" style="flex:1;"></select>
+              <button type="button" id="btn-quick-nc" class="btn-sm" title="簡易登録">＋</button>
+            </div>
           </label>
-          <label>NC構成品番号<input name="ncPartNumber" maxlength="100" /></label>
-          <label>NC納入仕様書番号<input name="ncSpecNumber" maxlength="100" /></label>
+          <label>NC構成品番号<input name="nc_bom_no" type="text" maxlength="30" /></label>
+          <label>NC納入仕様書番号<input name="nc_spec_no" type="text" maxlength="20" /></label>
         </div>
-        <div class="sub-grid">
-          <label>シリーズ名<input name="seriesName" readonly /></label>
-          <label>機種名<input name="modelName" readonly /></label>
-          <label>NC制御ユニット<input name="controlUnit" readonly /></label>
-          <label>表示ユニット<input name="displayUnit" readonly /></label>
-          <label>表示サイズ_インチ<input name="displaySizeInch" readonly /></label>
-          <label>タッチパネル<input name="touchPanel" readonly /></label>
+        <!-- NC system attributes (auto-fill) -->
+        <div class="nc-attrs">
+          <div class="nc-attr-item"><span>シリーズ名:</span><span id="attr-series">-</span></div>
+          <div class="nc-attr-item"><span>機種名:</span><span id="attr-model">-</span></div>
+          <div class="nc-attr-item"><span>NC制御ユニット:</span><span id="attr-control">-</span></div>
+          <div class="nc-attr-item"><span>表示ユニット:</span><span id="attr-display">-</span></div>
+          <div class="nc-attr-item"><span>表示サイズ:</span><span id="attr-size">-</span></div>
+          <div class="nc-attr-item"><span>タッチパネル:</span><span id="attr-touch">-</span></div>
         </div>
-      </details>
-
-      <details open>
-        <summary>2. 機械情報</summary>
-        <div class="grid">
-          <label>機械モデル<input name="machineModel" /></label>
-          <label>機械シリアル番号<input name="machineSerial" /></label>
-          <label>機械メーカ
-            <select name="machineMaker"><option value="">選択してください</option></select>
-          </label>
-          <label class="full">機械メモ<textarea name="machineMemo" maxlength="300"></textarea></label>
-        </div>
-      </details>
-
-      <details open>
-        <summary>3. NC販売情報</summary>
-        <div class="grid">
-          <label>NC販売日<input name="ncSaleDate" type="date" /></label>
-          <label>NC販売会社
-            <select name="ncSalesCompany"><option value="">選択してください</option></select>
-          </label>
-          <label class="full">NC販売メモ<textarea name="ncSaleMemo" maxlength="300"></textarea></label>
-        </div>
-      </details>
-
-      <details open>
-        <summary>4. 機械輸出情報</summary>
-        <div class="grid">
-          <label>機械代理店<input name="machineAgency" /></label>
-          <label class="full">機械代理店メモ<textarea name="machineAgencyMemo" maxlength="300"></textarea></label>
-          <label>機械輸出日<input name="machineExportDate" type="date" /></label>
-          <label>機械輸出先
-            <select name="exportCountry"><option value="">選択してください</option></select>
-          </label>
-          <label class="full">出荷メモ<textarea name="shipmentMemo" maxlength="300"></textarea></label>
-        </div>
-      </details>
-
-      <details open>
-        <summary>5. 機械設置情報</summary>
-        <div class="grid">
-          <label>現地機械販売店<input name="localDealer" /></label>
-          <label class="full">現地機械販売店メモ<textarea name="localDealerMemo" maxlength="300"></textarea></label>
-          <label>エンドユーザ<input name="endUser" /></label>
-          <label class="full">エンドユーザメモ<textarea name="endUserMemo" maxlength="300"></textarea></label>
-          <label>設置日<input name="installationDate" type="date" /></label>
-        </div>
-      </details>
-
-      <details open>
-        <summary>6. 契約情報 <span class="badge required">必須あり</span></summary>
-        <div class="grid">
-          <label>ご契約者
-            <select name="contractCustomerType">
-              <option value="">選択してください</option>
-              <option value="MTB">MTB</option>
-              <option value="Dealer">Dealer</option>
-              <option value="EndUser">EndUser</option>
-            </select>
-          </label>
-          <label>三菱契約受託会社
-            <select name="contractCompany"><option value="">選択してください</option></select>
-          </label>
-          <label>三菱サービス拠点
-            <select name="serviceBase"><option value="">選択してください</option></select>
-          </label>
-          <label>契約番号 <span class="badge required">必須</span><input name="contractNumber" required /></label>
-          <label>契約タイプ
-            <select name="contractType">
-              <option value="">選択してください</option>
-              <option value="FULL">FULL</option>
-              <option value="PARTS">PARTS</option>
-              <option value="EWC">EWC</option>
-            </select>
-          </label>
-          <label for="contractMonths">契約期間(月数)
-            <input id="contractMonths" name="contractMonths" type="number" min="0" step="1" inputmode="numeric" />
-          </label>
-          <label>契約開始日<input name="contractStartDate" type="date" /></label>
-          <label class="full">契約メモ<textarea name="contractMemo" maxlength="300"></textarea></label>
-        </div>
-      </details>
-
-      <details>
-        <summary>7. ユーザ情報（将来拡張）</summary>
-        <div class="grid">
-          <label>ユーザID<input name="userId" /></label>
-          <label>ユーザ種別
-            <select name="userType">
-              <option value="">選択してください</option>
-              <option value="MTB">MTB</option>
-              <option value="Dealer">Dealer</option>
-              <option value="EndUser">EndUser</option>
-              <option value="Mitsubishi">Mitsubishi</option>
-            </select>
-          </label>
-          <label>会社名<input name="companyName" /></label>
-          <label>部署名<input name="departmentName" /></label>
-          <label>担当者名<input name="contactName" /></label>
-          <label>メールアドレス<input name="email" type="email" /></label>
-          <label>電話番号<input name="phone" /></label>
-          <label>国
-            <select name="userCountry"><option value="">選択してください</option></select>
-          </label>
-          <label class="full">住所<textarea name="address" maxlength="300"></textarea></label>
-          <label class="full">備考<textarea name="userNote" maxlength="300"></textarea></label>
-        </div>
-      </details>
-
-      <div class="actions">
-        <button type="submit">登録</button>
-        <button type="button" id="clear-btn">クリア</button>
       </div>
-      <p id="form-error" role="alert"></p>
+
+      <!-- 機械情報 -->
+      <div class="field-group">
+        <h4>● 機械情報</h4>
+        <div class="grid">
+          <label>機械モデル<input name="machine_model" type="text" maxlength="100" /></label>
+          <label>機械シリアル番号<input name="machine_serial_no" type="text" maxlength="100" /></label>
+          <label>機械メーカ
+            <div style="display:flex;gap:6px;align-items:center;">
+              <select name="mtb_code" style="flex:1;"></select>
+              <button type="button" id="btn-quick-mtb" class="btn-sm" title="簡易登録">＋</button>
+            </div>
+          </label>
+          <label class="full">機械メモ（300文字以内）
+            <textarea name="machine_memo" maxlength="300"></textarea>
+          </label>
+        </div>
+      </div>
+
+      <!-- NC販売情報 -->
+      <div class="field-group">
+        <h4>● NC販売情報</h4>
+        <div class="grid">
+          <label>NC販売日<input name="nc_sales_date" type="date" /></label>
+          <label>NC販売会社<select name="nc_sales_company_code"></select></label>
+          <label class="full">NC販売メモ（300文字以内）
+            <textarea name="nc_sales_memo" maxlength="300"></textarea>
+          </label>
+        </div>
+      </div>
+
     </form>
 
-    <section>
-      <h2>登録済み一覧（SCR-02）</h2>
-      <table id="records-table">
+    <div class="wizard-actions">
+      <button id="btn-step1-cancel">× キャンセル</button>
+      <button id="btn-step1-draft">💾 下書き保存</button>
+      <button id="btn-step1-next" class="btn-primary">次へ（輸出・設置情報）→</button>
+    </div>
+  </div><!-- /step-1 -->
+
+  <!-- ---- Step 2: S04 輸出・設置情報 ---- -->
+  <div id="step-2" class="wizard-step">
+    <h2>輸出・設置情報登録</h2>
+    <div id="step2-messages" class="messages-box"></div>
+
+    <form id="form-step2" novalidate>
+
+      <!-- 機械輸出情報 -->
+      <div class="field-group">
+        <h4>● 機械輸出情報</h4>
+        <div class="grid">
+          <label>機械代理店<input name="machine_agent" type="text" maxlength="100" /></label>
+          <label class="full">機械代理店メモ（300文字以内）
+            <textarea name="machine_agent_memo" maxlength="300"></textarea>
+          </label>
+          <label>機械輸出日<input name="export_date" type="date" /></label>
+          <label>機械輸出先<select name="export_country_code"></select></label>
+          <label class="full">出荷メモ（300文字以内）
+            <textarea name="shipment_memo" maxlength="300"></textarea>
+          </label>
+        </div>
+      </div>
+
+      <!-- 機械設置情報 -->
+      <div class="field-group">
+        <h4>● 機械設置情報</h4>
+        <div class="grid">
+          <label>現地機械販売店<input name="local_dealer" type="text" maxlength="100" /></label>
+          <label class="full">現地機械販売店メモ（300文字以内）
+            <textarea name="local_dealer_memo" maxlength="300"></textarea>
+          </label>
+          <label>エンドユーザ<input name="end_user" type="text" maxlength="100" /></label>
+          <label class="full">エンドユーザメモ（300文字以内）
+            <textarea name="end_user_memo" maxlength="300"></textarea>
+          </label>
+          <label>設置日<input name="installation_date" type="date" /></label>
+        </div>
+      </div>
+
+    </form>
+
+    <div class="wizard-actions">
+      <button id="btn-step2-back">← 戻る</button>
+      <button id="btn-step2-draft">💾 下書き保存</button>
+      <button id="btn-step2-skip">スキップ（契約情報へ）</button>
+      <button id="btn-step2-next" class="btn-primary">次へ（契約情報）→</button>
+    </div>
+  </div><!-- /step-2 -->
+
+  <!-- ---- Step 3: S05 契約情報 ---- -->
+  <div id="step-3" class="wizard-step">
+    <h2>契約情報登録</h2>
+    <div id="step3-messages" class="messages-box"></div>
+
+    <div style="margin-bottom:8px;">
+      <button id="btn-add-contract" class="btn-primary">＋ 契約追加</button>
+    </div>
+
+    <div class="contract-table-wrapper">
+      <table id="contract-table">
         <thead>
           <tr>
-            <th>#</th><th>NCシリアル番号</th><th>NCシステム型名</th><th>機械シリアル番号</th><th>エンドユーザ</th><th>契約番号</th>
+            <th style="width:36px">No</th>
+            <th>ご契約者</th>
+            <th>三菱契約受託会社</th>
+            <th>三菱サービス拠点</th>
+            <th>契約番号</th>
+            <th>契約タイプ</th>
+            <th>契約期間<br>（月数）</th>
+            <th>契約開始日</th>
+            <th>契約終了日</th>
+            <th style="min-width:120px">契約メモ</th>
+            <th style="width:70px">操作</th>
           </tr>
         </thead>
-        <tbody></tbody>
+        <tbody id="contract-tbody"></tbody>
       </table>
-    </section>
+    </div>
+    <p id="contract-empty" style="color:#888;padding:10px 0;">契約行がありません。「契約追加」ボタンで行を追加してください。</p>
 
-    <section>
-      <h2>マスタ参照（SCR-03）</h2>
-      <div id="master-reference"></div>
-    </section>
-  </main>
+    <div class="wizard-actions">
+      <button id="btn-step3-back">← 戻る</button>
+      <button id="btn-step3-draft">💾 下書き保存</button>
+      <button id="btn-step3-skip">契約なしで確認へ</button>
+      <button id="btn-step3-confirm" class="btn-primary">確認へ →</button>
+    </div>
+  </div><!-- /step-3 -->
 
-  <script type="module" src="js/app.js"></script>
+  <!-- ---- Step 4: S06 確認 ---- -->
+  <div id="step-4" class="wizard-step">
+    <h2>入力内容確認</h2>
+    <div id="confirm-messages" class="messages-box"></div>
+
+    <div class="confirm-section">
+      <h4>NC情報</h4>
+      <div id="confirm-nc"></div>
+    </div>
+    <div class="confirm-section">
+      <h4>機械情報</h4>
+      <div id="confirm-machine"></div>
+    </div>
+    <div class="confirm-section">
+      <h4>NC販売情報</h4>
+      <div id="confirm-sales"></div>
+    </div>
+    <div class="confirm-section">
+      <h4>輸出・設置情報</h4>
+      <div id="confirm-export"></div>
+    </div>
+    <div class="confirm-section">
+      <h4>契約情報</h4>
+      <div id="confirm-contracts"></div>
+    </div>
+
+    <div class="wizard-actions">
+      <button id="btn-confirm-back">← 戻る（契約情報を修正）</button>
+      <button id="btn-confirm-register" class="btn-primary">✓ 登録する</button>
+    </div>
+  </div><!-- /step-4 -->
+
+</section><!-- /screen-wizard -->
+
+<!-- ============================================================
+     S07: 登録完了画面
+     ============================================================ -->
+<section id="screen-s07" class="screen">
+  <div class="completion-box">
+    <div class="completion-icon">✅</div>
+    <h2>登録が完了しました</h2>
+    <p>NCシリアル番号: <strong id="s07-serial"></strong></p>
+    <p>ステータス: <strong id="s07-status"></strong></p>
+    <div class="completion-actions">
+      <button id="s07-new" class="btn-primary">＋ 新規登録</button>
+      <button id="s07-list">一覧へ戻る</button>
+      <button id="s07-add-contract">同NCに契約追加</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     S09: 下書き・未完了一覧
+     ============================================================ -->
+<section id="screen-s09" class="screen">
+  <div class="screen-header">
+    <h2>下書き・未完了一覧</h2>
+    <button id="s09-back">← 一覧へ戻る</button>
+  </div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>NCシリアル番号</th><th>登録ステータス</th>
+          <th>未入力セクション</th><th>最終更新日</th><th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="s09-tbody"></tbody>
+    </table>
+    <p id="s09-empty" class="no-data" style="display:none">下書きデータがありません。</p>
+  </div>
+</section>
+
+<!-- ============================================================
+     マスタ管理画面 (M01-M07)
+     ============================================================ -->
+<section id="screen-masters" class="screen">
+  <h2>マスタ管理</h2>
+  <div class="master-tabs">
+    <button class="master-tab-btn active" data-master="ncSystem">M01 NCシステム型名</button>
+    <button class="master-tab-btn" data-master="mtb">M02 MTB</button>
+    <button class="master-tab-btn" data-master="salesCompany">M03 販売会社</button>
+    <button class="master-tab-btn" data-master="serviceBase">M04 サービス拠点</button>
+    <button class="master-tab-btn" data-master="country">M05 国コード</button>
+    <button class="master-tab-btn" data-master="contractHolderType">M06 契約者区分</button>
+    <button class="master-tab-btn" data-master="contractType">M07 契約タイプ</button>
+  </div>
+  <div id="master-content"></div>
+</section>
+
+<!-- ============================================================
+     S08: マスタ簡易登録ダイアログ (Modal)
+     ============================================================ -->
+<div id="modal-backdrop" class="modal-backdrop hidden"></div>
+<div id="modal-s08" class="modal hidden">
+  <h3>マスタ簡易登録</h3>
+  <p style="font-size:12px;color:#666;">対象マスタ: <strong id="s08-master-label"></strong></p>
+  <label>コード（変更不可）
+    <input id="s08-code" type="text" maxlength="50" placeholder="英数字・ハイフン等" />
+  </label>
+  <label>表示名
+    <input id="s08-name" type="text" maxlength="100" />
+  </label>
+  <label>備考
+    <input id="s08-note" type="text" maxlength="300" />
+  </label>
+  <div id="s08-error" class="messages-box"></div>
+  <div class="modal-actions">
+    <button id="s08-cancel">キャンセル</button>
+    <button id="s08-save" class="btn-primary">登録</button>
+  </div>
+</div>
+
+</main>
+
+<script type="module" src="js/app.js"></script>
 </body>
 </html>

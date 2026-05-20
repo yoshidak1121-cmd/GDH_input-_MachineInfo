@@ -1,5 +1,6 @@
 [
-  "Mitsubishi Electric Japan",
-  "Mitsubishi Electric Europe",
-  "Mitsubishi Electric Americas"
+  {"code":"MEJ","display_name":"三菱電機（日本）","is_active":true,"can_be_contract_owner":true,"company_type":"SALES","display_order":1},
+  {"code":"MEE","display_name":"Mitsubishi Electric Europe","is_active":true,"can_be_contract_owner":true,"company_type":"SALES","display_order":2},
+  {"code":"MEAM","display_name":"Mitsubishi Electric Americas","is_active":true,"can_be_contract_owner":true,"company_type":"SALES","display_order":3},
+  {"code":"MEAP","display_name":"Mitsubishi Electric Asia Pacific","is_active":true,"can_be_contract_owner":true,"company_type":"SALES","display_order":4}
 ]

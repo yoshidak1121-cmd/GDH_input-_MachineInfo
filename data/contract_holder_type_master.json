@@ -1,0 +1,5 @@
+[
+  {"code":"MTB","display_name":"MTB","description":"機械メーカが契約者となる場合","is_active":true,"display_order":1},
+  {"code":"DEALER","display_name":"Dealer","description":"代理店が契約者となる場合","is_active":true,"display_order":2},
+  {"code":"ENDUSER","display_name":"EndUser","description":"エンドユーザが契約者となる場合","is_active":true,"display_order":3}
+]
