@@ -84,14 +84,25 @@ export function toggleUserMasterActive(masterType, code) {
   localStorage.setItem(STORAGE_KEY_UMASTERS, JSON.stringify(masters));
 }
 
-export function computeStatus(record) {
+export function computeStatus(record, options = {}) {
+  const { finalize = false, warningCount = 0 } = options;
   if (!record.nc_serial_no) return '下書き';
-  const hasBasic = record.nc_system_model || record.machine_model || record.nc_sales_company_code;
+
+  const hasBasic = !!(record.nc_system_model || record.machine_model || record.nc_sales_company_code);
   if (!hasBasic) return '下書き';
-  const hasInstall = record.installation_date || record.end_user || record.export_country_code;
-  if (!hasInstall) return '基本情報登録済み';
-  const hasContracts = record.contracts && record.contracts.length > 0;
-  return hasContracts ? '契約情報登録済み' : '契約未登録';
+
+  const hasInstall = !!(record.installation_date || record.end_user || record.export_country_code);
+  const hasContracts = !!(record.contracts && record.contracts.length > 0);
+
+  if (finalize) {
+    if (warningCount > 0) return '要確認';
+    if (hasContracts) return '登録完了';
+    return '契約未登録';
+  }
+
+  if (hasContracts) return '契約情報登録済み';
+  if (hasInstall) return '設置情報登録済み';
+  return '基本情報登録済み';
 }
 
 export function createNewRecord(nc_serial_no) {

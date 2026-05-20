@@ -180,6 +180,15 @@ function populateStep3() {
   const tbody = $('contract-tbody');
   if (!tbody) return;
   renderContractTable(tbody, currentRecord.contracts, masters);
+  updateContractEmptyState();
+}
+
+function updateContractEmptyState() {
+  const empty = $('contract-empty');
+  const tbody = $('contract-tbody');
+  if (!empty || !tbody) return;
+  const hasRows = tbody.querySelectorAll('.contract-row').length > 0;
+  empty.style.display = hasRows ? 'none' : 'block';
 }
 
 // ---------------------------------------------------------------------------
@@ -335,12 +344,12 @@ function renderList(filter = {}) {
     const badge = `<span class="status-badge status-${statusCls}">${escHtml(r.registration_status)}</span>`;
 
     const cells = [
-      escHtml(r.nc_serial_no),
-      escHtml(r.nc_system_model||''),
-      escHtml(findDisplayName(masters.mtb, r.mtb_code)),
-      escHtml(r.machine_model||''),
-      escHtml(r.end_user||''),
-      escHtml(findDisplayName(masters.salesCompanies, r.nc_sales_company_code)),
+      r.nc_serial_no || '',
+      r.nc_system_model || '',
+      findDisplayName(masters.mtb, r.mtb_code),
+      r.machine_model || '',
+      r.end_user || '',
+      findDisplayName(masters.salesCompanies, r.nc_sales_company_code),
       formatDate(r.installation_date),
       r.contracts?.length ? `${r.contracts.length}件` : 'なし',
     ];
@@ -455,7 +464,7 @@ function renderMasterTab(masterType) {
     const btnLabel = m.is_active ? '無効化' : '有効化';
     return `<tr class="${m.is_active ? '' : 'inactive-row'}">
       <td>${escHtml(m.code)}</td>
-      <td>${escHtml(m.display_name)}</td>
+      <td>${escHtml(m.display_name || m.systemModelName || m.code)}</td>
       <td>${escHtml(note)}</td>
       <td>${m.is_active ? '有効' : '無効'}</td>
       <td><button class="btn-sm" data-maction="toggle" data-mtype="${escAttr(masterType)}" data-mcode="${escAttr(m.code)}">${btnLabel}</button></td>
@@ -529,6 +538,8 @@ async function saveS08() {
     const listMap = { ncSystem: masters.ncSystems, mtb: masters.mtb };
     sel.innerHTML = buildSelectOptions(listMap[mt] || [], code);
     sel.value = code;
+  } else if (mt) {
+    renderMasterTab(mt);
   }
 
   toast(`「${name}」を登録しました。`);
@@ -560,19 +571,19 @@ function startWizard(record, startStep = 1) {
 
 function draftSave() {
   collectCurrentStep();
-  currentRecord.registration_status = computeStatus(currentRecord);
+  currentRecord.registration_status = computeStatus(currentRecord, { finalize: false });
   saveDraft(currentRecord);
   toast('下書きを保存しました。');
 }
 
 function finishRegistration() {
   collectStep1(); collectStep2(); collectStep3();
-  const { errors } = validateAll(currentRecord, getRecords(), editingSerial);
+  const { errors, warnings } = validateAll(currentRecord, getRecords(), editingSerial);
   if (errors.length) {
     toast('入力エラーがあります。確認してください。', 'error');
     return;
   }
-  currentRecord.registration_status = computeStatus(currentRecord);
+  currentRecord.registration_status = computeStatus(currentRecord, { finalize: true, warningCount: warnings.length });
   saveRecord(currentRecord);
   deleteDraft(currentRecord.nc_serial_no);
   $('s07-serial').textContent = currentRecord.nc_serial_no;
@@ -750,6 +761,12 @@ function wireEvents() {
       contract_period_month: 24,
       contract_start_date: installDate,
     });
+    updateContractEmptyState();
+  });
+  $('contract-tbody')?.addEventListener('click', (e) => {
+    if (e.target.closest('.btn-delete-row, .btn-copy-row')) {
+      setTimeout(updateContractEmptyState, 0);
+    }
   });
   $('btn-step3-confirm')?.addEventListener('click', () => {
     collectStep3();
@@ -820,4 +837,3 @@ async function main() {
 }
 
 main();
-
