@@ -97,7 +97,8 @@ export function allItemsForDropdown(list, currentCode = '') {
     const isCurrentInactive = !m.is_active && m.code === currentCode;
     const show = m.is_active || isCurrentInactive;
     if (!show) return null;
-    const label = m.is_active ? m.display_name : `${m.display_name}（無効）`;
+    const baseName = m.display_name || m.systemModelName || m.code;
+    const label = m.is_active ? baseName : `${baseName}（無効）`;
     return { value: m.code, label };
   }).filter(Boolean);
 }
@@ -136,6 +137,6 @@ export function findDisplayName(list, code, fallback = '') {
   if (!code) return fallback;
   const found = list.find(m => m.code === code);
   if (!found) return code;
-  return found.is_active ? found.display_name : `${found.display_name}（無効）`;
+  const baseName = found.display_name || found.systemModelName || found.code;
+  return found.is_active ? baseName : `${baseName}（無効）`;
 }
-
