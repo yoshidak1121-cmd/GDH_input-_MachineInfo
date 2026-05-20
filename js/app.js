@@ -659,6 +659,7 @@ function wireEvents() {
   });
 
 
+  $('btn-new-reg')?.addEventListener('click', startNewRegistration);
   $('btn-drafts-nav')?.addEventListener('click', () => { renderDrafts(); showScreen('screen-s09'); });
   $('btn-search')?.addEventListener('click', () => {
     renderList({
