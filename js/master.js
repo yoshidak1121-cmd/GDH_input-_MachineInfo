@@ -1,4 +1,4 @@
-import { getUserMasters } from './state.js';
+import { getUserMasters, getMasterOverrides } from './state.js';
 
 function escAttr(str)    { return String(str ?? '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function escContent(str) { return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -61,20 +61,29 @@ export async function loadMasters() {
   ]);
 
   const userMasters = getUserMasters();
+  const overrides   = getMasterOverrides();
+
   function merge(base, user) {
     if (!user || !user.length) return base;
     const codes = new Set(base.map(m => m.code));
     return [...base, ...user.filter(m => !codes.has(m.code))];
   }
 
+  /** Apply is_active overrides stored by toggleMasterItem */
+  function applyOverrides(list, masterType) {
+    const mt = overrides[masterType];
+    if (!mt) return list;
+    return list.map(m => mt.hasOwnProperty(m.code) ? { ...m, is_active: mt[m.code] } : m);
+  }
+
   return {
-    ncSystems:           merge(ncSystems, userMasters.ncSystems),
-    salesCompanies:      merge(salesCompanies, userMasters.salesCompanies),
-    serviceBases:        merge(serviceBases, userMasters.serviceBases),
-    countries,
-    mtb:                 merge(mtb, userMasters.mtb),
-    contractHolderTypes,
-    contractTypes,
+    ncSystems:           applyOverrides(merge(ncSystems, userMasters.ncSystems), 'ncSystem'),
+    salesCompanies:      applyOverrides(merge(salesCompanies, userMasters.salesCompanies), 'salesCompany'),
+    serviceBases:        applyOverrides(merge(serviceBases, userMasters.serviceBases), 'serviceBase'),
+    countries:           applyOverrides(countries, 'country'),
+    mtb:                 applyOverrides(merge(mtb, userMasters.mtb), 'mtb'),
+    contractHolderTypes: applyOverrides(contractHolderTypes, 'contractHolderType'),
+    contractTypes:       applyOverrides(contractTypes, 'contractType'),
   };
 }
 
