@@ -303,3 +303,45 @@ th { background: #eaf0f8; font-weight: 700; }
   .mi-header { flex-wrap: wrap; }
   .mi-nav-btn { font-size: 11px; padding: 4px 8px; }
 }
+
+/* ---- Service Info ---- */
+.mi-btn-service {
+  background: #f0f7ff;
+  color: var(--mi-primary);
+  border-color: #b0ccee;
+}
+.mi-btn-service:hover:not(:disabled) { background: #dceeff; }
+.mi-svc-count {
+  display: inline-block;
+  background: var(--mi-primary);
+  color: #fff;
+  border-radius: 10px;
+  font-size: 10px;
+  padding: 0 5px;
+  min-width: 16px;
+  text-align: center;
+  font-weight: 700;
+}
+.mi-svc-status-confirmed { background: #d5f5e3; color: #0a6a2f; }
+.mi-svc-status-draft     { background: #e8e8e8; color: #555; }
+.mi-svc-type-full  { background: #dce8f7; color: #004a99; }
+.mi-svc-type-parts { background: #fef0d8; color: #7a4500; }
+.mi-svc-type-ewc   { background: #e8f4e8; color: #1a7a3a; }
+.mi-svc-inst-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 13px;
+  padding: 6px 0;
+}
+.mi-svc-inst-row span { white-space: nowrap; }
+.mi-svc-end-date-display {
+  display: inline-block;
+  padding: 5px 8px;
+  background: var(--mi-readonly-bg);
+  border: 1px solid var(--mi-border);
+  border-radius: 4px;
+  color: var(--mi-muted);
+  font-size: 14px;
+  min-width: 110px;
+}
