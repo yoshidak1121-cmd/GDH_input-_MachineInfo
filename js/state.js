@@ -1,9 +1,8 @@
 // State management with localStorage persistence
 
-const STORAGE_KEY_RECORDS   = 'cnc_records';
-const STORAGE_KEY_DRAFTS    = 'cnc_drafts';
-const STORAGE_KEY_UMASTERS  = 'cnc_user_masters';
-const STORAGE_KEY_MOVERRIDES = 'cnc_master_overrides';
+const STORAGE_KEY_RECORDS = 'cnc_records';
+const STORAGE_KEY_DRAFTS  = 'cnc_drafts';
+const STORAGE_KEY_UMASTERS = 'cnc_user_masters';
 
 export function getRecords() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY_RECORDS) || '[]'); }
@@ -83,37 +82,6 @@ export function toggleUserMasterActive(masterType, code) {
   const item = (masters[masterType] || []).find(m => m.code === code);
   if (item) item.is_active = !item.is_active;
   localStorage.setItem(STORAGE_KEY_UMASTERS, JSON.stringify(masters));
-}
-
-/** Get override map for master active states (covers both base and user masters) */
-export function getMasterOverrides() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY_MOVERRIDES) || '{}'); }
-  catch { return {}; }
-}
-
-/**
- * Toggle a master item's active state.
- * Works for both base JSON masters and user-added masters.
- * @param {string} masterType - e.g. 'ncSystem', 'mtb', ...
- * @param {string} code - master item code
- * @param {boolean} currentIsActive - current is_active value to toggle from
- */
-export function toggleMasterItem(masterType, code, currentIsActive) {
-  const newActive = !currentIsActive;
-
-  // Store override (applies to all masters including base JSON)
-  const overrides = getMasterOverrides();
-  if (!overrides[masterType]) overrides[masterType] = {};
-  overrides[masterType][code] = newActive;
-  localStorage.setItem(STORAGE_KEY_MOVERRIDES, JSON.stringify(overrides));
-
-  // Also update userMasters entry if present (keeps the two stores in sync)
-  const um = getUserMasters();
-  const item = (um[masterType] || []).find(m => m.code === code);
-  if (item) {
-    item.is_active = newActive;
-    localStorage.setItem(STORAGE_KEY_UMASTERS, JSON.stringify(um));
-  }
 }
 
 export function computeStatus(record, options = {}) {

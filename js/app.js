@@ -1,10 +1,10 @@
 import { loadMasters, activeItems, buildSelectOptions, buildContractOwnerOptions, findDisplayName } from './master.js';
 import { validateStep1, validateStep2, validateStep3, validateAll } from './validation.js';
 import {
-  getRecords, saveRecord, saveRecords, deleteRecord, getRecord,
+  getRecords, saveRecord, deleteRecord, getRecord,
   getDrafts, saveDraft, deleteDraft, getDraft,
   computeStatus, createNewRecord, formatDate, getMissingSteps,
-  addUserMaster, toggleMasterItem, getUserMasters,
+  addUserMaster, toggleUserMasterActive, getUserMasters,
 } from './state.js';
 import { addContractRow, getAllContracts, renderContractTable } from './contracts.js';
 
@@ -620,95 +620,11 @@ window.app = {
     renderDrafts();
   },
   toggleMaster(masterType, code) {
-    const listMap = {
-      ncSystem:           masters.ncSystems,
-      mtb:                masters.mtb,
-      salesCompany:       masters.salesCompanies,
-      serviceBase:        masters.serviceBases,
-      country:            masters.countries,
-      contractHolderType: masters.contractHolderTypes,
-      contractType:       masters.contractTypes,
-    };
-    const item = (listMap[masterType] || []).find(m => m.code === code);
-    if (!item) return;
-    toggleMasterItem(masterType, code, item.is_active);
+    toggleUserMasterActive(masterType, code);
     loadMasters().then(m => { masters = m; renderMasterTab(masterType); });
   },
   openS08(masterType, selectEl) { openS08(masterType, selectEl); },
 };
-
-// ---------------------------------------------------------------------------
-// Demo data loader
-// ---------------------------------------------------------------------------
-function loadDemoData() {
-  if (!confirm('デモデータを読み込みます。既存のデータに追加されます。続行しますか？')) return;
-  const now = new Date().toISOString();
-  const demo = [
-    {
-      nc_serial_no: 'SN-2024-001', nc_system_model: 'FCA830H-4SV', nc_bom_no: '', nc_spec_no: 'SPEC-001',
-      machine_model: 'NVX5100', machine_serial_no: 'M-2024-001', mtb_code: 'DMGMORI', machine_memo: '',
-      nc_sales_date: '2024-03-01', nc_sales_company_code: 'MEJ', nc_sales_memo: '',
-      machine_agent: '三菱電機商事', machine_agent_memo: '',
-      export_date: '2024-04-15', export_country_code: 'JP', shipment_memo: '',
-      local_dealer: '', local_dealer_memo: '',
-      end_user: 'サンプル工業株式会社', end_user_memo: '',
-      installation_date: '2024-05-01',
-      registration_status: '登録完了',
-      contracts: [
-        { contract_holder_type_code:'MTB', contract_owner_code:'MEJ', service_base_code:'MEAK',
-          contract_no:'C-2024-001', contract_type_code:'FULL', contract_period_month:24,
-          contract_start_date:'2024-05-01', contract_memo:'' },
-        { contract_holder_type_code:'DEALER', contract_owner_code:'MEE', service_base_code:'MEB',
-          contract_no:'C-2024-002', contract_type_code:'PARTS', contract_period_month:12,
-          contract_start_date:'2026-05-01', contract_memo:'延長オプション' },
-      ],
-      created_at: now, updated_at: now,
-    },
-    {
-      nc_serial_no: 'SN-2024-002', nc_system_model: 'FCA80H-4AV', nc_bom_no: '', nc_spec_no: '',
-      machine_model: 'VARIAXIS j-500', machine_serial_no: 'M-2024-002', mtb_code: 'MAZAK', machine_memo: '',
-      nc_sales_date: '2024-06-01', nc_sales_company_code: 'MEE', nc_sales_memo: '',
-      machine_agent: '', machine_agent_memo: '',
-      export_date: '2024-07-20', export_country_code: 'DE', shipment_memo: '',
-      local_dealer: 'Sample Dealer GmbH', local_dealer_memo: '',
-      end_user: 'Sample GmbH', end_user_memo: '',
-      installation_date: '2024-08-01',
-      registration_status: '契約未登録',
-      contracts: [],
-      created_at: now, updated_at: now,
-    },
-    {
-      nc_serial_no: 'SN-2024-003', nc_system_model: 'FCA850H-4SV', nc_bom_no: '', nc_spec_no: '',
-      machine_model: '', machine_serial_no: '', mtb_code: '', machine_memo: '',
-      nc_sales_date: '', nc_sales_company_code: '', nc_sales_memo: '',
-      machine_agent: '', machine_agent_memo: '',
-      export_date: '', export_country_code: '', shipment_memo: '',
-      local_dealer: '', local_dealer_memo: '',
-      end_user: '', end_user_memo: '',
-      installation_date: '',
-      registration_status: '下書き',
-      contracts: [],
-      created_at: now, updated_at: now,
-    },
-  ];
-
-  const existing = getRecords();
-  const existingSerials = new Set(existing.map(r => r.nc_serial_no));
-  let added = 0;
-  demo.forEach(r => {
-    if (!existingSerials.has(r.nc_serial_no)) {
-      existing.push(r);
-      added++;
-    }
-  });
-  if (added > 0) {
-    saveRecords(existing);
-    renderList();
-    toast(`デモデータ ${added} 件を読み込みました。`);
-  } else {
-    toast('デモデータは既に読み込み済みです。', 'error');
-  }
-}
 
 // ---------------------------------------------------------------------------
 // Event wiring
@@ -756,7 +672,6 @@ function wireEvents() {
 
   $('btn-new-reg')?.addEventListener('click', startNewRegistration);
   $('btn-drafts-nav')?.addEventListener('click', () => { renderDrafts(); showScreen('screen-s09'); });
-  $('btn-load-demo')?.addEventListener('click', loadDemoData);
   $('btn-search')?.addEventListener('click', () => {
     renderList({
       serial:  $('search-serial')?.value.trim() || '',
