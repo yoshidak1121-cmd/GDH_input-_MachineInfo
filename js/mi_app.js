@@ -8,6 +8,7 @@ import {
 import { initInstallationScreens, renderInstallationList } from './mi_installation.js';
 import { initMaintenanceScreens, renderMaintenanceList, renderReview, renderApproval } from './mi_maintenance.js';
 import { initReportScreen, renderReport } from './mi_report.js';
+import { initServiceScreens, renderServiceList } from './mi_service.js';
 
 // ---- Seed demo data on first load ----
 seedIfNeeded();
@@ -75,6 +76,7 @@ function _showApp(user) {
   initInstallationScreens();
   initMaintenanceScreens();
   initReportScreen();
+  initServiceScreens();
 
   // Default screen
   navigateTo('installation-list');
@@ -100,6 +102,7 @@ export function navigateTo(screen) {
   if (screen === 'review')             renderReview();
   if (screen === 'approval')           renderApproval();
   if (screen === 'report')             renderReport();
+  if (screen === 'service-list')       renderServiceList();
 }
 
 // ---- Show a specific screen (for sub-screens / forms) ----

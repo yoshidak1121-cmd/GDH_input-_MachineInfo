@@ -2,11 +2,12 @@
 // mi_state.js – State / data layer (localStorage) for Machine Info system
 // ============================================================
 
-const KEY_INSTALL = 'mi_installation_base';
-const KEY_MAINT   = 'mi_active_maintenance';
-const KEY_ISSUES  = 'mi_issue_list';
-const KEY_USER    = 'mi_current_user';
-const KEY_SEEDED  = 'mi_seeded_v1';
+const KEY_INSTALL  = 'mi_installation_base';
+const KEY_MAINT    = 'mi_active_maintenance';
+const KEY_ISSUES   = 'mi_issue_list';
+const KEY_USER     = 'mi_current_user';
+const KEY_SEEDED   = 'mi_seeded_v1';
+const KEY_SERVICE  = 'mi_service_info';
 
 // ---- Demo users ----
 export const DEMO_USERS = [
@@ -68,6 +69,8 @@ export function deleteInstallation(base_id) {
   _saveInstallations(getInstallations().filter(r => r.base_id !== base_id));
   // Cascade delete related maintenance records
   _saveMaintenances(getMaintenances().filter(r => r.base_id !== base_id));
+  // Cascade delete related service records
+  _saveServices(getServices().filter(r => r.base_id !== base_id));
 }
 
 // ================================================================
@@ -107,6 +110,63 @@ export function getPreviousActiveCount(base_id, report_year) {
     .filter(r => r.base_id === base_id && Number(r.report_year) < Number(report_year))
     .sort((a, b) => Number(b.report_year) - Number(a.report_year));
   return prev.length > 0 ? (prev[0].active_count ?? null) : null;
+}
+
+// ================================================================
+// Service Info (サービス情報 / 契約情報)
+// ================================================================
+export function getServices() {
+  try { return JSON.parse(localStorage.getItem(KEY_SERVICE) || '[]'); }
+  catch { return []; }
+}
+function _saveServices(list) {
+  localStorage.setItem(KEY_SERVICE, JSON.stringify(list));
+}
+export function getService(service_id) {
+  return getServices().find(r => r.service_id === service_id) || null;
+}
+export function getServicesByBase(base_id) {
+  return getServices().filter(r => r.base_id === base_id);
+}
+export function saveService(record) {
+  const list = getServices();
+  const now = new Date().toISOString();
+  if (!record.service_id) {
+    record.service_id = uuid();
+    record.created_at = now;
+  }
+  record.updated_at = now;
+  const idx = list.findIndex(r => r.service_id === record.service_id);
+  if (idx >= 0) list[idx] = record;
+  else list.push(record);
+  _saveServices(list);
+  return record;
+}
+export function deleteService(service_id) {
+  _saveServices(getServices().filter(r => r.service_id !== service_id));
+}
+
+export function validateService(rec) {
+  const errors = [];
+  if (!rec.base_id) errors.push('設置データを選択してください');
+  if (!rec.contract_type_code) errors.push('契約タイプは必須です');
+  const period = Number(rec.contract_period_month);
+  if (!rec.contract_period_month || isNaN(period) || period < 1)
+    errors.push('契約期間（月数）は1以上の整数で入力してください');
+  if (!rec.contract_start_date) errors.push('契約開始日は必須です');
+  if (rec.contract_memo && String(rec.contract_memo).length > 300)
+    errors.push('契約メモは300文字以内で入力してください');
+  return errors;
+}
+
+/** Calculate contract end date: start + months - 1 day */
+export function calcContractEndDate(startDate, periodMonth) {
+  if (!startDate || !periodMonth) return '';
+  const d = new Date(startDate);
+  if (isNaN(d.getTime())) return '';
+  d.setMonth(d.getMonth() + Number(periodMonth));
+  d.setDate(d.getDate() - 1);
+  return d.toISOString().slice(0, 10);
 }
 
 // ================================================================
@@ -252,6 +312,15 @@ export function seedIfNeeded() {
   localStorage.setItem(KEY_INSTALL, JSON.stringify(installations));
   localStorage.setItem(KEY_MAINT,   JSON.stringify(maintenances));
   localStorage.setItem(KEY_ISSUES,  JSON.stringify([]));
+
+  const services = [
+    { service_id:'SV001', base_id:'B001', contract_holder_type_code:'MTB',     contract_owner_code:'MEJ',  service_base_code:'MEAP', contract_no:'TH-2022-001', contract_type_code:'FULL',  contract_period_month:24, contract_start_date:'2022-04-01', contract_memo:'',             status:'Confirmed', created_at:now, updated_at:now },
+    { service_id:'SV002', base_id:'B001', contract_holder_type_code:'DEALER',  contract_owner_code:'MEAP', service_base_code:'MEAP', contract_no:'TH-2022-002', contract_type_code:'PARTS', contract_period_month:12, contract_start_date:'2022-10-01', contract_memo:'部品のみ契約', status:'Confirmed', created_at:now, updated_at:now },
+    { service_id:'SV003', base_id:'B003', contract_holder_type_code:'ENDUSER', contract_owner_code:'MMEG', service_base_code:'MMEG', contract_no:'DE-2023-001', contract_type_code:'FULL',  contract_period_month:24, contract_start_date:'2023-01-15', contract_memo:'',             status:'Draft',     created_at:now, updated_at:now },
+    { service_id:'SV004', base_id:'B005', contract_holder_type_code:'MTB',     contract_owner_code:'MEJ',  service_base_code:'MEACH',contract_no:'CN-2022-001', contract_type_code:'EWC',   contract_period_month:12, contract_start_date:'2022-07-01', contract_memo:'延長保証',     status:'Confirmed', created_at:now, updated_at:now },
+  ];
+
+  localStorage.setItem(KEY_SERVICE, JSON.stringify(services));
   localStorage.setItem(KEY_SEEDED,  '1');
 }
 

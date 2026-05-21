@@ -33,6 +33,7 @@
     <nav class="mi-nav">
       <button class="mi-nav-btn" data-nav="installation-list">設置データ</button>
       <button class="mi-nav-btn" data-nav="maintenance-list">稼働台数メンテ</button>
+      <button class="mi-nav-btn" data-nav="service-list">🔧 サービス情報</button>
       <button class="mi-nav-btn" data-nav="review">チェック・確認</button>
       <button class="mi-nav-btn mi-hq-only" data-nav="approval">承認・差戻し</button>
       <button class="mi-nav-btn" data-nav="report">集計レポート</button>
@@ -435,6 +436,134 @@
       <div id="mi-report-tab-by-year"     class="mi-report-tab-content hidden"></div>
       <div id="mi-report-tab-by-mtb"      class="mi-report-tab-content hidden"></div>
       <div id="mi-report-tab-by-accuracy" class="mi-report-tab-content hidden"></div>
+    </section>
+
+    <!-- ============================================================
+         SCREEN: サービス情報一覧
+         ============================================================ -->
+    <section id="mi-screen-service-list" class="mi-screen">
+      <div class="mi-screen-header">
+        <h2 id="mi-svc-list-title">サービス情報一覧</h2>
+        <div class="mi-screen-actions">
+          <button id="mi-svc-list-back" class="hidden">← 設置データ一覧へ戻る</button>
+          <button id="mi-btn-add-service" class="mi-btn-primary" disabled>＋ サービス情報追加</button>
+        </div>
+      </div>
+      <p class="mi-hint">設置データ一覧の「🔧 サービス情報」ボタンから対象の設置データを選んでサービス情報を登録してください。</p>
+      <div class="mi-filter-bar">
+        <label>拠点コード<input id="mi-svc-filter-site" type="text" placeholder="絞り込み" /></label>
+        <label>ステータス
+          <select id="mi-svc-filter-status">
+            <option value="">全て</option>
+            <option value="Draft">下書き</option>
+            <option value="Confirmed">確定</option>
+          </select>
+        </label>
+        <label>契約タイプ
+          <select id="mi-svc-filter-contract-type">
+            <option value="">全て</option>
+            <option value="FULL">FULL</option>
+            <option value="PARTS">PARTS</option>
+            <option value="EWC">EWC</option>
+          </select>
+        </label>
+        <button id="mi-svc-btn-search" class="mi-btn-primary">検索</button>
+        <button id="mi-svc-btn-clear">クリア</button>
+      </div>
+      <div class="mi-table-wrap">
+        <table id="mi-svc-table">
+          <thead>
+            <tr>
+              <th>拠点</th><th>設置年</th><th>ステータス</th>
+              <th>ご契約者</th><th>契約受託会社</th><th>サービス拠点</th>
+              <th>契約番号</th><th>契約タイプ</th><th class="mi-num-th">契約期間</th>
+              <th>契約開始日</th><th>契約終了日</th><th>最終更新</th><th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="mi-svc-tbody"></tbody>
+        </table>
+        <p id="mi-svc-empty" class="mi-no-data hidden">登録データがありません。</p>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         SCREEN: サービス情報 登録・編集フォーム
+         ============================================================ -->
+    <section id="mi-screen-service-form" class="mi-screen">
+      <div class="mi-screen-header">
+        <h2 id="mi-svc-form-title">サービス情報登録</h2>
+        <button id="mi-svc-form-back">← 一覧へ戻る</button>
+      </div>
+      <div id="mi-svc-form-msg" class="mi-messages hidden"></div>
+
+      <!-- Parent installation readonly -->
+      <div class="mi-field-group mi-info-readonly">
+        <h4>● 設置データ参照（自動表示）</h4>
+        <div id="mi-svc-inst-readonly" class="mi-svc-inst-row"></div>
+      </div>
+
+      <form id="mi-svc-form" novalidate>
+        <input type="hidden" name="service_id" />
+        <input type="hidden" name="base_id" />
+
+        <div class="mi-field-group">
+          <h4>● 契約者情報</h4>
+          <div class="mi-grid">
+            <label>ご契約者
+              <select name="contract_holder_type_code">
+                <option value="">-- 選択 --</option>
+              </select>
+            </label>
+            <label>三菱契約受託会社
+              <select name="contract_owner_code">
+                <option value="">-- 選択 --</option>
+              </select>
+            </label>
+            <label>三菱サービス拠点
+              <select name="service_base_code">
+                <option value="">-- 選択 --</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="mi-field-group">
+          <h4>● 契約内容</h4>
+          <div class="mi-grid">
+            <label>契約番号
+              <input name="contract_no" type="text" maxlength="20" placeholder="例: TH-2024-001" />
+            </label>
+            <label>契約タイプ <span class="mi-req">必須</span>
+              <select name="contract_type_code">
+                <option value="">-- 選択 --</option>
+              </select>
+            </label>
+            <label>契約期間（月数）<span class="mi-req">必須</span>
+              <input name="contract_period_month" type="number" min="1" step="1" placeholder="例: 24" />
+            </label>
+            <label>契約開始日 <span class="mi-req">必須</span>
+              <input name="contract_start_date" type="date" />
+            </label>
+            <label>契約終了日（自動計算）
+              <span id="mi-svc-end-date" class="mi-svc-end-date-display">-</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="mi-field-group">
+          <h4>● メモ</h4>
+          <div class="mi-grid">
+            <label class="mi-full">契約メモ（300文字以内）
+              <textarea name="contract_memo" maxlength="300" rows="3"></textarea>
+            </label>
+          </div>
+        </div>
+      </form>
+      <div class="mi-form-actions">
+        <button id="mi-svc-form-cancel">キャンセル</button>
+        <button id="mi-svc-form-draft">💾 下書き保存</button>
+        <button id="mi-svc-form-save" class="mi-btn-primary">✓ 確定保存</button>
+      </div>
     </section>
 
   </main>

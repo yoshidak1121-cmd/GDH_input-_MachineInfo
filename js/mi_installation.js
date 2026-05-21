@@ -5,6 +5,7 @@
 import {
   getCurrentUser,
   getInstallations, getInstallation, saveInstallation, deleteInstallation,
+  getServicesByBase,
   validateInstallation, fmt, fmtNum, fmtDate, htmlEsc,
 } from './mi_state.js';
 import { showScreen, toast } from './mi_app.js';
@@ -96,6 +97,7 @@ export function renderInstallationList() {
       <td>
         <div class="mi-row-actions">
           <button class="mi-btn-sm" onclick="window.__miInstEdit('${htmlEsc(r.base_id)}')">編集</button>
+          <button class="mi-btn-sm mi-btn-service" onclick="window.__miInstService('${htmlEsc(r.base_id)}')">🔧 サービス情報 <span class="mi-svc-count">${getServicesByBase(r.base_id).length}</span></button>
           ${user.role === 'hq_staff'
             ? `<button class="mi-btn-sm mi-btn-danger" onclick="window.__miInstDelete('${htmlEsc(r.base_id)}')">削除</button>`
             : ''}
@@ -105,6 +107,9 @@ export function renderInstallationList() {
   `).join('');
 
   window.__miInstEdit = id => _openForm(id);
+  window.__miInstService = id => {
+    import('./mi_service.js').then(mod => mod.openServiceListForBase(id));
+  };
   window.__miInstDelete = id => {
     if (!confirm('この設置データを削除しますか？\n関連する稼働台数データも削除されます。')) return;
     deleteInstallation(id);
