@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>設置台数・稼働台数管理システム</title>
+  <link rel="stylesheet" href="css/mi_style.css" />
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="mi-login" class="mi-login-overlay">
+  <div class="mi-login-box">
+    <div class="mi-login-icon">📊</div>
+    <h2>設置台数・稼働台数管理</h2>
+    <p class="mi-login-sub">DataHub実装前 暫定Webシステム</p>
+    <label>ログインユーザー選択（デモ）
+      <select id="mi-login-select">
+        <option value="">-- ユーザーを選択 --</option>
+      </select>
+    </label>
+    <button id="mi-btn-login" class="mi-btn-primary" style="width:100%;margin-top:12px;">ログイン</button>
+    <div id="mi-login-error" class="mi-msg-error" style="display:none;margin-top:8px;"></div>
+  </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="mi-app" class="hidden">
+  <header class="mi-header">
+    <div class="mi-header-left">
+      <h1>📊 設置台数・稼働台数管理</h1>
+    </div>
+    <nav class="mi-nav">
+      <button class="mi-nav-btn" data-nav="installation-list">設置データ</button>
+      <button class="mi-nav-btn" data-nav="maintenance-list">稼働台数メンテ</button>
+      <button class="mi-nav-btn" data-nav="review">チェック・確認</button>
+      <button class="mi-nav-btn mi-hq-only" data-nav="approval">承認・差戻し</button>
+      <button class="mi-nav-btn" data-nav="report">集計レポート</button>
+    </nav>
+    <div class="mi-header-right">
+      <span class="mi-user-badge" id="mi-user-display"></span>
+      <button id="mi-btn-logout" class="mi-btn-sm">ログアウト</button>
+    </div>
+  </header>
+
+  <main class="mi-main">
+
+    <!-- ============================================================
+         SCREEN: 設置データ一覧
+         ============================================================ -->
+    <section id="mi-screen-installation-list" class="mi-screen">
+      <div class="mi-screen-header">
+        <h2>設置データ一覧</h2>
+        <div class="mi-screen-actions">
+          <button id="mi-btn-add-installation" class="mi-btn-primary">＋ 新規登録</button>
+          <button id="mi-btn-export-installation" class="mi-btn-sm">📥 CSV出力</button>
+        </div>
+      </div>
+      <div class="mi-filter-bar">
+        <label>拠点コード<input id="mi-inst-filter-site" type="text" placeholder="絞り込み" /></label>
+        <label>国<input id="mi-inst-filter-country" type="text" placeholder="絞り込み" /></label>
+        <label>設置年<input id="mi-inst-filter-year" type="number" placeholder="例: 2018" /></label>
+        <label>粒度
+          <select id="mi-inst-filter-granularity">
+            <option value="">全て</option>
+            <option>Total</option>
+            <option>MTB</option>
+            <option>NCSeries</option>
+          </select>
+        </label>
+        <button id="mi-inst-btn-search" class="mi-btn-primary">検索</button>
+        <button id="mi-inst-btn-clear">クリア</button>
+      </div>
+      <div class="mi-table-wrap">
+        <table id="mi-inst-table">
+          <thead>
+            <tr>
+              <th>拠点</th><th>国</th><th>エリア</th><th>設置年</th>
+              <th>粒度</th><th>MTB</th><th>NCシリーズ</th>
+              <th class="mi-num-th">設置台数</th><th>精度</th><th>Primary</th>
+              <th>最終更新</th><th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="mi-inst-tbody"></tbody>
+        </table>
+        <p id="mi-inst-empty" class="mi-no-data hidden">登録データがありません。</p>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         SCREEN: 設置データ登録・編集フォーム
+         ============================================================ -->
+    <section id="mi-screen-installation-form" class="mi-screen">
+      <div class="mi-screen-header">
+        <h2 id="mi-inst-form-title">設置データ登録</h2>
+        <button id="mi-inst-form-back">← 一覧へ戻る</button>
+      </div>
+      <div id="mi-inst-form-msg" class="mi-messages hidden"></div>
+      <form id="mi-inst-form" novalidate>
+        <input type="hidden" name="base_id" />
+        <div class="mi-field-group">
+          <h4>● 基本情報</h4>
+          <div class="mi-grid">
+            <label>拠点コード <span class="mi-req">必須</span>
+              <input name="site_code" type="text" maxlength="20" placeholder="例: TH01" />
+            </label>
+            <label>国 <span class="mi-req">必須</span>
+              <input name="country" type="text" maxlength="50" placeholder="例: Thailand" />
+            </label>
+            <label>エリア
+              <input name="area" type="text" maxlength="50" placeholder="例: Asia" />
+            </label>
+            <label>設置年 <span class="mi-req">必須</span>
+              <input name="install_year" type="number" min="1990" max="2099" placeholder="例: 2018" />
+            </label>
+            <label>データ粒度 <span class="mi-req">必須</span>
+              <select name="data_granularity">
+                <option value="">-- 選択 --</option>
+                <option>Total</option>
+                <option>MTB</option>
+                <option>NCSeries</option>
+              </select>
+            </label>
+            <label>機械メーカ <span class="mi-req-cond">(MTB時必須)</span>
+              <input name="machine_builder" type="text" maxlength="100" placeholder="例: MAZAK" />
+            </label>
+            <label>NCシリーズ <span class="mi-req-cond">(NCSeries時必須)</span>
+              <input name="nc_series" type="text" maxlength="100" placeholder="例: M80" />
+            </label>
+          </div>
+        </div>
+        <div class="mi-field-group">
+          <h4>● 設置台数情報</h4>
+          <div class="mi-grid">
+            <label>設置台数 <span class="mi-req">必須</span>
+              <input name="installed_count" type="number" min="0" step="1" />
+            </label>
+            <label>設置台数精度 <span class="mi-req">必須</span>
+              <select name="installed_count_accuracy">
+                <option value="">-- 選択 --</option>
+                <option value="Exact">Exact（確定値）</option>
+                <option value="Estimated">Estimated（推定値）</option>
+                <option value="Approximate">Approximate（概算）</option>
+              </select>
+            </label>
+            <label>Primary集計対象 <span class="mi-req">必須</span>
+              <select name="primary_flag">
+                <option value="">-- 選択 --</option>
+                <option value="true">TRUE（集計対象）</option>
+                <option value="false">FALSE（集計対象外）</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div class="mi-field-group">
+          <h4>● ソース情報・メモ</h4>
+          <div class="mi-grid">
+            <label>ソースファイル名
+              <input name="source_file_name" type="text" maxlength="200" />
+            </label>
+            <label class="mi-full">ソースメモ
+              <textarea name="source_note" maxlength="500"></textarea>
+            </label>
+            <label class="mi-full">メモ
+              <textarea name="note" maxlength="500"></textarea>
+            </label>
+          </div>
+        </div>
+      </form>
+      <div class="mi-form-actions">
+        <button id="mi-inst-form-cancel">キャンセル</button>
+        <button id="mi-inst-form-save" class="mi-btn-primary">💾 保存</button>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         SCREEN: 稼働台数メンテ一覧
+         ============================================================ -->
+    <section id="mi-screen-maintenance-list" class="mi-screen">
+      <div class="mi-screen-header">
+        <h2>稼働台数メンテ一覧</h2>
+        <div class="mi-screen-actions">
+          <button id="mi-btn-add-maintenance" class="mi-btn-primary">＋ 新規登録</button>
+          <button id="mi-btn-export-maintenance" class="mi-btn-sm">📥 CSV出力</button>
+        </div>
+      </div>
+      <div class="mi-filter-bar">
+        <label>拠点コード<input id="mi-maint-filter-site" type="text" placeholder="絞り込み" /></label>
+        <label>報告年<input id="mi-maint-filter-year" type="number" placeholder="例: 2023" /></label>
+        <label>ステータス
+          <select id="mi-maint-filter-status">
+            <option value="">全て</option>
+            <option>Draft</option>
+            <option>Submitted</option>
+            <option>Under Review</option>
+            <option>Returned</option>
+            <option>Approved</option>
+            <option>Locked</option>
+          </select>
+        </label>
+        <label style="flex-direction:row;align-items:center;gap:6px;font-weight:normal;">
+          <input type="checkbox" id="mi-maint-filter-errors" style="width:auto;" />エラーのみ
+        </label>
+        <button id="mi-maint-btn-search" class="mi-btn-primary">検索</button>
+        <button id="mi-maint-btn-clear">クリア</button>
+      </div>
+      <div class="mi-table-wrap">
+        <table id="mi-maint-table">
+          <thead>
+            <tr>
+              <th>拠点</th><th>国</th><th>設置年</th><th>MTB</th>
+              <th>報告年</th><th class="mi-num-th">設置台数</th>
+              <th class="mi-num-th">稼働台数</th><th class="mi-num-th">非稼働</th>
+              <th>稼働率</th><th>前年差異</th><th>精度</th>
+              <th>ステータス</th><th>最終更新</th><th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="mi-maint-tbody"></tbody>
+        </table>
+        <p id="mi-maint-empty" class="mi-no-data hidden">登録データがありません。</p>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         SCREEN: 稼働台数メンテ フォーム
+         ============================================================ -->
+    <section id="mi-screen-maintenance-form" class="mi-screen">
+      <div class="mi-screen-header">
+        <h2 id="mi-maint-form-title">稼働台数登録</h2>
+        <button id="mi-maint-form-back">← 一覧へ戻る</button>
+      </div>
+      <div id="mi-maint-form-msg" class="mi-messages hidden"></div>
+
+      <!-- Auto-display installation info -->
+      <div class="mi-field-group mi-info-readonly">
+        <h4>● 設置データ参照（自動表示）</h4>
+        <div style="margin-bottom:10px;">
+          <label>設置データ選択 <span class="mi-req">必須</span>
+            <select id="mi-mf-base-select">
+              <option value="">-- 設置データを選択してください --</option>
+            </select>
+          </label>
+        </div>
+        <div class="mi-grid mi-readonly-grid">
+          <label>拠点コード<input id="mi-mf-site-code" readonly tabindex="-1" /></label>
+          <label>国<input id="mi-mf-country" readonly tabindex="-1" /></label>
+          <label>設置年<input id="mi-mf-install-year" readonly tabindex="-1" /></label>
+          <label>機械メーカ<input id="mi-mf-machine-builder" readonly tabindex="-1" /></label>
+          <label>NCシリーズ<input id="mi-mf-nc-series" readonly tabindex="-1" /></label>
+          <label>設置台数<input id="mi-mf-installed-count" readonly tabindex="-1" /></label>
+        </div>
+      </div>
+
+      <form id="mi-maint-form" novalidate>
+        <input type="hidden" name="maintenance_id" />
+        <input type="hidden" name="base_id" />
+
+        <div class="mi-field-group">
+          <h4>● 稼働台数情報</h4>
+          <div class="mi-grid">
+            <label>報告年度 <span class="mi-req">必須</span>
+              <input name="report_year" type="number" min="1990" max="2099" placeholder="例: 2023" />
+            </label>
+            <label>前年稼働台数（自動）
+              <input name="previous_active_count" type="number" readonly tabindex="-1" />
+            </label>
+            <label>稼働台数 <span class="mi-req">必須</span>
+              <input name="active_count" type="number" min="0" step="1" />
+            </label>
+            <label>非稼働台数（自動計算）
+              <input name="inactive_count" type="number" readonly tabindex="-1" />
+            </label>
+            <label>稼働率（自動計算）
+              <input name="active_rate" type="text" readonly tabindex="-1" />
+            </label>
+            <label>前年差異（自動計算）
+              <input name="difference_from_previous" type="number" readonly tabindex="-1" />
+            </label>
+            <label>前年差異率（自動計算）
+              <input name="difference_rate" type="text" readonly tabindex="-1" />
+            </label>
+          </div>
+        </div>
+
+        <div class="mi-field-group">
+          <h4>● カウント方法・精度</h4>
+          <div class="mi-grid">
+            <label>カウント方法 <span class="mi-req">必須</span>
+              <select name="active_count_method">
+                <option value="">-- 選択 --</option>
+                <option value="Survey">Survey（調査）</option>
+                <option value="Estimation">Estimation（推計）</option>
+                <option value="Contract">Contract（契約ベース）</option>
+                <option value="Report">Report（報告ベース）</option>
+                <option value="Other">Other（その他）</option>
+              </select>
+            </label>
+            <label>カウント精度 <span class="mi-req">必須</span>
+              <select name="active_count_accuracy">
+                <option value="">-- 選択 --</option>
+                <option value="Exact">Exact（確定値）</option>
+                <option value="Estimated">Estimated（推定値）</option>
+                <option value="Approximate">Approximate（概算）</option>
+              </select>
+            </label>
+            <label>確認日
+              <input name="status_confirmed_date" type="date" />
+            </label>
+            <label>確認者
+              <input name="confirmed_by" type="text" maxlength="100" />
+            </label>
+          </div>
+        </div>
+
+        <div class="mi-field-group">
+          <h4>● 変更理由・メモ</h4>
+          <div class="mi-grid">
+            <label id="mi-mf-change-reason-label" class="mi-full">変更理由
+              <textarea name="change_reason" maxlength="500" placeholder="前年比±20%以上の場合は必須"></textarea>
+            </label>
+            <label class="mi-full">メモ
+              <textarea name="note" maxlength="500"></textarea>
+            </label>
+          </div>
+        </div>
+      </form>
+      <div class="mi-form-actions">
+        <button id="mi-maint-form-cancel">キャンセル</button>
+        <button id="mi-maint-form-draft">💾 一時保存（下書き）</button>
+        <button id="mi-maint-form-save" class="mi-btn-primary">✓ 保存</button>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         SCREEN: チェック・確認
+         ============================================================ -->
+    <section id="mi-screen-review" class="mi-screen">
+      <div class="mi-screen-header">
+        <h2>チェック・確認</h2>
+        <div class="mi-screen-actions">
+          <button id="mi-btn-submit-all" class="mi-btn-primary">✈ 選択した項目を提出</button>
+        </div>
+      </div>
+      <p class="mi-hint">下書き・差戻し済みのデータを確認し、問題なければ「提出」してください。提出後は本邦担当者のレビューに進みます。</p>
+      <div class="mi-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:36px"><input type="checkbox" id="mi-review-check-all" /></th>
+              <th>拠点</th><th>設置年</th><th>MTB</th><th>報告年</th>
+              <th class="mi-num-th">稼働台数</th><th>稼働率</th>
+              <th>ステータス</th><th>差戻しコメント</th><th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="mi-review-tbody"></tbody>
+        </table>
+        <p id="mi-review-empty" class="mi-no-data hidden">提出可能なデータがありません。</p>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         SCREEN: 承認・差戻し (HQ only)
+         ============================================================ -->
+    <section id="mi-screen-approval" class="mi-screen">
+      <div class="mi-screen-header">
+        <h2>承認・差戻し</h2>
+        <div class="mi-screen-actions">
+          <button id="mi-btn-approve-selected" class="mi-btn-primary">✓ 選択を承認</button>
+          <button id="mi-btn-return-selected" class="mi-btn-danger">↩ 選択を差戻し</button>
+        </div>
+      </div>
+      <div class="mi-filter-bar">
+        <label>拠点コード<input id="mi-appr-filter-site" type="text" placeholder="絞り込み" /></label>
+        <label>報告年<input id="mi-appr-filter-year" type="number" placeholder="例: 2023" /></label>
+        <label>ステータス
+          <select id="mi-appr-filter-status">
+            <option value="">全て（提出済み以降）</option>
+            <option value="Submitted">Submitted</option>
+            <option value="Under Review">Under Review</option>
+            <option value="Approved">Approved</option>
+            <option value="Returned">Returned</option>
+          </select>
+        </label>
+        <button id="mi-appr-btn-search" class="mi-btn-primary">検索</button>
+        <button id="mi-appr-btn-clear">クリア</button>
+      </div>
+      <div class="mi-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:36px"><input type="checkbox" id="mi-appr-check-all" /></th>
+              <th>拠点</th><th>国</th><th>設置年</th><th>MTB</th><th>報告年</th>
+              <th class="mi-num-th">設置台数</th><th class="mi-num-th">稼働台数</th>
+              <th>稼働率</th><th>精度</th><th>ステータス</th><th>提出日</th><th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="mi-appr-tbody"></tbody>
+        </table>
+        <p id="mi-appr-empty" class="mi-no-data hidden">データがありません。</p>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         SCREEN: 集計レポート
+         ============================================================ -->
+    <section id="mi-screen-report" class="mi-screen">
+      <div class="mi-screen-header">
+        <h2>集計レポート</h2>
+        <div class="mi-screen-actions">
+          <button id="mi-btn-export-report" class="mi-btn-sm">📥 CSV出力（現在タブ）</button>
+        </div>
+      </div>
+      <div class="mi-filter-bar">
+        <label>報告年
+          <select id="mi-report-filter-year">
+            <option value="">全年度</option>
+          </select>
+        </label>
+        <label>拠点コード<input id="mi-report-filter-site" type="text" placeholder="絞り込み" /></label>
+        <label>集計対象
+          <select id="mi-report-filter-primary">
+            <option value="true">Primary=TRUEのみ</option>
+            <option value="">全て</option>
+          </select>
+        </label>
+        <button id="mi-report-btn-refresh" class="mi-btn-primary">集計実行</button>
+      </div>
+      <div class="mi-report-tabs">
+        <button class="mi-report-tab active" data-tab="by-site">拠点別</button>
+        <button class="mi-report-tab" data-tab="by-year">年度別</button>
+        <button class="mi-report-tab" data-tab="by-mtb">MTB別</button>
+        <button class="mi-report-tab" data-tab="by-accuracy">精度別</button>
+      </div>
+      <div id="mi-report-tab-by-site"     class="mi-report-tab-content"></div>
+      <div id="mi-report-tab-by-year"     class="mi-report-tab-content hidden"></div>
+      <div id="mi-report-tab-by-mtb"      class="mi-report-tab-content hidden"></div>
+      <div id="mi-report-tab-by-accuracy" class="mi-report-tab-content hidden"></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ============================================================
+     MODALS
+     ============================================================ -->
+<div id="mi-modal-backdrop" class="mi-modal-backdrop hidden"></div>
+
+<!-- Return comment modal -->
+<div id="mi-modal-return" class="mi-modal hidden">
+  <h3>差戻しコメント入力</h3>
+  <label>差戻し理由・コメント <span class="mi-req">必須</span>
+    <textarea id="mi-return-comment" maxlength="500" rows="4" placeholder="差戻し理由を入力してください"></textarea>
+  </label>
+  <div id="mi-return-error" class="mi-msg-error hidden" style="margin-top:6px;"></div>
+  <div class="mi-modal-actions">
+    <button id="mi-return-cancel">キャンセル</button>
+    <button id="mi-return-confirm" class="mi-btn-danger">↩ 差戻し実行</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="mi-toast" class="mi-toast hidden"></div>
+
+<script type="module" src="js/mi_app.js"></script>
+</body>
+</html>

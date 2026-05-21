@@ -194,3 +194,51 @@ python -m http.server 8080
   - 契約期間: 24ヶ月
   - 契約開始日: 設置日
 - 契約コピー時: 契約番号・開始日・メモはクリア
+
+---
+
+## 設置台数・稼働台数管理システム（DataHub実装前 暫定Web入力機能）
+
+`machine_info.html` を開くと起動します。
+
+### 目的
+
+各海外拠点が設置台数データ・稼働台数データをWeb画面から入力・確認できる暫定システムです。将来のDataHub移行に向け、英語スネークケースの項目名で設計されています。
+
+### 画面一覧
+
+| 画面 | 概要 |
+|---|---|
+| ログイン | デモユーザー選択（HQ / 各拠点） |
+| 設置データ一覧・登録 | installation_base テーブルの管理 |
+| 稼働台数メンテ一覧・登録 | active_maintenance テーブルの管理 |
+| チェック・確認 | 拠点担当者が下書きを確認して提出 |
+| 承認・差戻し | 本邦担当者（HQ）が提出データを承認または差戻し |
+| 集計レポート | 拠点別・年度別・MTB別・精度別の集計表示とCSV出力 |
+
+### ロール
+
+| ロール | 権限 |
+|---|---|
+| `site_staff` | 自拠点データのみ閲覧・入力・提出 |
+| `hq_staff` | 全拠点データの閲覧・承認・差戻し・削除 |
+
+### データ管理テーブル
+
+- `installation_base` … 設置台数データ（原則固定）
+- `active_maintenance` … 稼働台数メンテデータ（report_year ごとに更新）
+- `issue_list` … 差戻しコメント
+
+### ステータスフロー
+
+```
+Draft → Submitted → Under Review → Approved / Locked
+                                ↘ Returned → (修正) → Submitted
+```
+
+### 起動方法
+
+```bash
+python -m http.server 8080
+# → http://localhost:8080/machine_info.html でアクセス
+```
