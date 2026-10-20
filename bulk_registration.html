@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>G-DataHub 機械情報一括登録（試作）</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    header a {color:#fff; text-decoration:none; border:1px solid #ffffff66; border-radius:4px; padding:5px 12px}
+    .bulk-panel {background:#fff;border:1px solid #d7dce6;border-radius:6px;padding:16px;margin:14px 0}
+    .bulk-row {display:grid;grid-template-columns:repeat(2,minmax(170px,1fr));gap:12px}
+    .bulk-row label {font-size:13px}
+    .bulk-note {font-size:13px;color:#526071;line-height:1.7}
+    .bulk-scroll {overflow-x:auto}
+    .bulk-scroll table {min-width:1150px;width:100%;border-collapse:collapse}
+    .bulk-scroll th,.bulk-scroll td {border:1px solid #d7dce6;padding:6px;vertical-align:top}
+    .bulk-scroll th {background:#eaf0f9;font-size:12px}
+    .bulk-scroll td input {min-width:130px}
+    .bulk-scroll td:first-child {min-width:44px;text-align:center}
+    .bulk-scroll td:last-child {min-width:118px;white-space:nowrap}
+    .bulk-error {color:#ae2323;font-size:12px;white-space:normal}
+    .bulk-actions {display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+    .bulk-warning {background:#fff5e7;padding:10px;border-left:3px solid #dd8b23}
+    .bulk-summary {font-weight:600;margin:10px 0;white-space:pre-wrap}
+    #bulk-alerts {white-space:pre-line;color:#ae2323}
+    #bulk-paste {width:100%;min-height:110px;font-family:Consolas,monospace;font-size:13px}
+    .bulk-required {color:#b32424}
+    @media(max-width:650px){.bulk-row{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<header>
+  <h1>G-DataHub 機械情報一括登録（試作）</h1>
+  <nav><a href="index.html">← NCサービス情報登録へ戻る</a></nav>
+</header>
+<main>
+  <div class="bulk-warning bulk-note">既存G-DataHubへの直接登録ではありません。CSV連携用の入力・確認画面です。CSVの8列と必須条件は暫定仕様であり、正式な連携仕様の照合が必要です。データはこの画面からサーバーへ送信しません。</div>
+  <section class="bulk-panel">
+    <h2>1. 共通情報</h2>
+    <p class="bulk-note">会社名・サービス拠点名を一度入力し、すべての機械行へ適用します。</p>
+    <div class="bulk-row">
+      <label>会社名 <span class="bulk-required">※</span><input id="bulk-company" maxlength="100" autocomplete="organization" placeholder="例：ABC Machinery" /></label>
+      <label>サービス拠点名 <span class="bulk-required">※</span><input id="bulk-service" maxlength="100" placeholder="例：MEIN" /></label>
+    </div>
+  </section>
+  <section class="bulk-panel">
+    <h2>2. 機械情報</h2>
+    <p class="bulk-note">※はCSV出力時の暫定必須項目です。NCシリアル番号は既存ブラウザ内の登録済み・下書きデータとも照合します。</p>
+    <div class="bulk-actions">
+      <button type="button" id="bulk-add" class="btn-primary">＋ 行を追加</button>
+      <button type="button" id="bulk-check">入力チェック</button>
+      <button type="button" id="bulk-export" class="btn-primary">8項目CSV出力</button>
+    </div>
+    <div class="bulk-scroll">
+      <table aria-label="機械一括登録">
+        <thead><tr><th>No.</th><th>NCシリアル番号 ※</th><th>機械シリアル番号 ※</th><th>機械モデル ※</th><th>機械メーカーコード</th><th>エンドユーザー会社名</th><th>輸出先国コード</th><th>操作</th></tr></thead>
+        <tbody id="bulk-tbody"></tbody>
+      </table>
+    </div>
+    <p class="bulk-summary" id="bulk-summary" role="status"></p>
+    <p id="bulk-alerts" role="alert"></p>
+  </section>
+  <section class="bulk-panel">
+    <h2>3. Excelから貼り付け</h2>
+    <p class="bulk-note">Excelの列を選択してコピーし、そのまま貼り付けてください。列順は「NCシリアル番号 / 機械シリアル番号 / 機械モデル / 機械メーカーコード / エンドユーザー会社名 / 輸出先国コード」。先頭3列のみでも貼り付け可能です。先頭行の見出しは自動除外します。</p>
+    <label for="bulk-paste">貼り付けデータ</label>
+    <textarea id="bulk-paste" placeholder="NC-001&#9;M-001&#9;MACHINE-A&#10;NC-002&#9;M-002&#9;MACHINE-B"></textarea>
+    <div class="bulk-actions">
+      <button type="button" id="bulk-import" class="btn-primary">貼り付けた行を追加</button>
+      <button type="button" id="bulk-clear-paste">貼り付け欄をクリア</button>
+    </div>
+  </section>
+  <section class="bulk-panel bulk-note">
+    <h2>CSV出力列（暫定8項目）</h2>
+    <p><code>company_name, service_base_name, nc_serial_no, machine_serial_no, machine_model, mtb_code, end_user, export_country_code</code></p>
+    <p>氏名・メールアドレス・電話番号は入力・出力しません。既存データの上書きやDB/API登録は行いません。正式CSV仕様が確定するまでは試験用途に限定してください。</p>
+  </section>
+</main>
+<script type="module">
+import { getRecords, getDrafts } from './js/state.js';
+
+const FIELDS = ['nc_serial_no', 'machine_serial_no', 'machine_model', 'mtb_code', 'end_user', 'export_country_code'];
+const HEADERS = ['company_name', 'service_base_name', ...FIELDS];
+const LABELS = ['NCシリアル番号', '機械シリアル番号', '機械モデル', '機械メーカーコード', 'エンドユーザー会社名', '輸出先国コード'];
+const LIMITS = [60, 100, 100, 100, 100, 20];
+const REQUIRED = [0, 1, 2];
+const tbody = document.getElementById('bulk-tbody');
+const alerts = document.getElementById('bulk-alerts');
+const summary = document.getElementById('bulk-summary');
+
+function fieldInput(value, i) {
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.dataset.field = FIELDS[i];
+  input.maxLength = LIMITS[i];
+  input.value = value || '';
+  input.setAttribute('aria-label', LABELS[i]);
+  input.addEventListener('input', () => { summary.textContent = '入力変更あり — 出力前に再チェック'; alerts.textContent = ''; });
+  return input;
+}
+function addRow(values = []) {
+  const tr = document.createElement('tr');
+  const number = document.createElement('td');
+  number.className = 'bulk-number';
+  tr.appendChild(number);
+  FIELDS.forEach((_, i) => {
+    const td = document.createElement('td');
+    td.appendChild(fieldInput(values[i], i));
+    tr.appendChild(td);
+  });
+  const actions = document.createElement('td');
+  const duplicate = document.createElement('button');
+  duplicate.type = 'button';
+  duplicate.className = 'btn-sm';
+  duplicate.textContent = '複製';
+  duplicate.addEventListener('click', () => { addRow(readRow(tr)); check(); });
+  const remove = document.createElement('button');
+  remove.type = 'button';
+  remove.className = 'btn-sm';
+  remove.textContent = '削除';
+  remove.addEventListener('click', () => { tr.remove(); renumber(); check(); });
+  actions.append(duplicate, document.createTextNode(' '), remove);
+  tr.appendChild(actions);
+  tbody.appendChild(tr);
+  renumber();
+  return tr;
+}
+function renumber() {
+  [...tbody.rows].forEach((r, i) => { r.querySelector('.bulk-number').textContent = String(i + 1); });
+}
+function readRow(tr) {
+  return FIELDS.map(key => tr.querySelector('[data-field="' + key + '"]').value.trim());
+}
+function normalizeSerial(value) {
+  // Compare only: preserve the original serial text in the CSV.
+  return value.trim().toLocaleUpperCase('en-US');
+}
+function check() {
+  const records = [...getRecords(), ...getDrafts()];
+  const oldSerials = new Set(records.map(r => normalizeSerial(String(r.nc_serial_no || ''))).filter(Boolean));
+  const seen = new Set();
+  let bad = 0;
+  const messages = [];
+  const company = document.getElementById('bulk-company').value.trim();
+  const service = document.getElementById('bulk-service').value.trim();
+  if (!company) messages.push('共通情報：会社名が未入力です。');
+  if (!service) messages.push('共通情報：サービス拠点名が未入力です。');
+  if (!tbody.rows.length) messages.push('機械情報の行がありません。');
+  const values = [];
+  [...tbody.rows].forEach((tr, index) => {
+    const row = readRow(tr);
+    const errors = [];
+    REQUIRED.forEach(i => { if (!row[i]) errors.push(LABELS[i] + 'が未入力'); });
+    row.forEach((v, i) => { if (v.length > LIMITS[i]) errors.push(LABELS[i] + 'が長すぎます'); });
+    const serial = normalizeSerial(row[0]);
+    if (serial) {
+      if (seen.has(serial)) errors.push('入力内でNCシリアル番号が重複');
+      if (oldSerials.has(serial)) errors.push('ブラウザ内の既存NCシリアル番号と重複');
+      seen.add(serial);
+    }
+    const previous = tr.querySelector('.bulk-error');
+    if (previous) previous.remove();
+    if (errors.length) {
+      bad++;
+      const td = tr.cells[1];
+      const msg = document.createElement('div');
+      msg.className = 'bulk-error';
+      msg.textContent = errors.join('／');
+      td.appendChild(msg);
+      messages.push((index + 1) + '行目：' + errors.join('／'));
+    }
+    values.push(row);
+  });
+  const ok = !messages.length;
+  summary.textContent = '合計 ' + values.length + ' 行 / 行エラー ' + bad + ' 行 / ' + (ok ? '出力可能' : 'CSV出力不可');
+  alerts.textContent = messages.join('\n');
+  return ok ? {company, service, values} : null;
+}
+function parsePaste(raw) {
+  const lines = raw.replace(/\r\n?/g, '\n').split('\n').filter(s => s.trim());
+  const items = [];
+  for (let i = 0; i < lines.length; i++) {
+    const columns = lines[i].split('\t').map(s => s.trim().replace(/^"(.*)"$/, '$1').replace(/""/g, '"'));
+    if (i === 0 && /^(nc_serial_no|ncシリアル番号|ncシリアル|nc serial)/i.test(columns[0])) continue;
+    if (columns.length < 3 || columns.length > 6) throw new Error((i + 1) + '行目：3～6列のタブ区切りで貼り付けてください。');
+    items.push(columns);
+  }
+  return items;
+}
+function csvCell(value) {
+  let text = String(value ?? '');
+  // Prevent spreadsheet formula execution on opening untrusted CSV cells.
+  if (/^[\s]*[=+\-@]/.test(text)) text = "'" + text;
+  return '"' + text.replace(/"/g, '""') + '"';
+}
+function exportCsv() {
+  const valid = check();
+  if (!valid) return;
+  const rows = [HEADERS, ...valid.values.map(row => [valid.company, valid.service, ...row])];
+  const csv = '\ufeff' + rows.map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = 'GDH_machine_bulk_registration_draft.csv';
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+document.getElementById('bulk-add').addEventListener('click', () => addRow());
+document.getElementById('bulk-check').addEventListener('click', check);
+document.getElementById('bulk-export').addEventListener('click', exportCsv);
+document.getElementById('bulk-import').addEventListener('click', () => {
+  try {
+    const data = parsePaste(document.getElementById('bulk-paste').value);
+    if (!data.length) throw new Error('貼り付けデータがありません。');
+    if (tbody.rows.length === 1 && readRow(tbody.rows[0]).every(s => !s)) tbody.innerHTML = '';
+    data.forEach(row => addRow(row));
+    document.getElementById('bulk-paste').value = '';
+    check();
+  } catch (error) { alerts.textContent = error.message; }
+});
+document.getElementById('bulk-clear-paste').addEventListener('click', () => {
+  document.getElementById('bulk-paste').value = '';
+});
+['bulk-company', 'bulk-service'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    summary.textContent = '共通情報変更あり — 出力前に再チェック';
+    alerts.textContent = '';
+  });
+});
+addRow();
+</script>
+</body>
+</html>
