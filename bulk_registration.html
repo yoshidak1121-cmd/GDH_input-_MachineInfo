@@ -45,15 +45,17 @@
   </section>
   <section class="bulk-panel">
     <h2>2. 機械情報</h2>
-    <p class="bulk-note">※はCSV出力時の暫定必須項目です。NCシリアル番号は既存ブラウザ内の登録済み・下書きデータとも照合します。</p>
+    <p class="bulk-note">※はCSV出力時の暫定必須項目です（既存下書きへの追加ではNCシリアル番号のみ必須）。NCシリアル番号は同じブラウザ内の登録済み・下書きデータとも照合します。</p>
     <div class="bulk-actions">
       <button type="button" id="bulk-add" class="btn-primary">＋ 行を追加</button>
-      <button type="button" id="bulk-check">入力チェック</button>
-      <button type="button" id="bulk-export" class="btn-primary">8項目CSV出力</button>
+      <button type="button" id="bulk-check">CSV入力チェック</button>
+      <button type="button" id="bulk-export" class="btn-primary">8項目CSV出力（暫定）</button>
+      <button type="button" id="bulk-save-drafts">既存画面の下書きに追加</button>
     </div>
+    <p class="bulk-note">「下書きに追加」は現在のブラウザ内のNCサービス情報登録システムへ機械情報を反映する機能です。会社名・サービス拠点名は対応するNC基本情報列がないため反映されません。G-DataHub本番DBには登録しません。</p>
     <div class="bulk-scroll">
       <table aria-label="機械一括登録">
-        <thead><tr><th>No.</th><th>NCシリアル番号 ※</th><th>機械シリアル番号 ※</th><th>機械モデル ※</th><th>機械メーカーコード</th><th>エンドユーザー会社名</th><th>輸出先国コード</th><th>操作</th></tr></thead>
+        <thead><tr><th>No.</th><th>NCシリアル番号 ※</th><th>機械シリアル番号 ※</th><th>機械モデル ※</th><th>機械メーカーコード</th><th>エンドユーザー会社名</th><th>輸出先国コード（ISO2）</th><th>操作</th></tr></thead>
         <tbody id="bulk-tbody"></tbody>
       </table>
     </div>
@@ -73,17 +75,18 @@
   <section class="bulk-panel bulk-note">
     <h2>CSV出力列（暫定8項目）</h2>
     <p><code>company_name, service_base_name, nc_serial_no, machine_serial_no, machine_model, mtb_code, end_user, export_country_code</code></p>
-    <p>氏名・メールアドレス・電話番号は入力・出力しません。既存データの上書きやDB/API登録は行いません。正式CSV仕様が確定するまでは試験用途に限定してください。</p>
+    <p>氏名・メールアドレス・電話番号は入力・出力しません。正式CSV仕様が確定するまでは試験用途に限定してください。下書き追加はこのブラウザのlocalStorageへの保存のみで、SQL ServerやAPIには送信しません。</p>
   </section>
 </main>
 <script type="module">
-import { getRecords, getDrafts } from './js/state.js';
+import { getRecords, getDrafts, createNewRecord, addDraftBatch } from './js/state.js';
+import { loadMasters } from './js/master.js';
 
 const FIELDS = ['nc_serial_no', 'machine_serial_no', 'machine_model', 'mtb_code', 'end_user', 'export_country_code'];
 const HEADERS = ['company_name', 'service_base_name', ...FIELDS];
 const LABELS = ['NCシリアル番号', '機械シリアル番号', '機械モデル', '機械メーカーコード', 'エンドユーザー会社名', '輸出先国コード'];
-const LIMITS = [60, 100, 100, 100, 100, 20];
-const REQUIRED = [0, 1, 2];
+const LIMITS = [60, 100, 100, 50, 100, 2];
+const CSV_REQUIRED = [0, 1, 2];
 const tbody = document.getElementById('bulk-tbody');
 const alerts = document.getElementById('bulk-alerts');
 const summary = document.getElementById('bulk-summary');
@@ -135,7 +138,7 @@ function normalizeSerial(value) {
   // Compare only: preserve the original serial text in the CSV.
   return value.trim().toLocaleUpperCase('en-US');
 }
-function check() {
+function check(mode = 'csv', masters = null) {
   const records = [...getRecords(), ...getDrafts()];
   const oldSerials = new Set(records.map(r => normalizeSerial(String(r.nc_serial_no || ''))).filter(Boolean));
   const seen = new Set();
@@ -143,14 +146,23 @@ function check() {
   const messages = [];
   const company = document.getElementById('bulk-company').value.trim();
   const service = document.getElementById('bulk-service').value.trim();
-  if (!company) messages.push('共通情報：会社名が未入力です。');
-  if (!service) messages.push('共通情報：サービス拠点名が未入力です。');
+  if (mode === 'csv' && !company) messages.push('共通情報：会社名が未入力です。');
+  if (mode === 'csv' && !service) messages.push('共通情報：サービス拠点名が未入力です。');
   if (!tbody.rows.length) messages.push('機械情報の行がありません。');
   const values = [];
   [...tbody.rows].forEach((tr, index) => {
     const row = readRow(tr);
     const errors = [];
-    REQUIRED.forEach(i => { if (!row[i]) errors.push(LABELS[i] + 'が未入力'); });
+    (mode === 'csv' ? CSV_REQUIRED : [0]).forEach(i => {
+      if (!row[i]) errors.push(LABELS[i] + 'が未入力');
+    });
+    // When creating drafts, reject unknown/inactive codes rather than silently clearing them in the existing select boxes.
+    if (mode === 'draft' && masters) {
+      if (row[3] && !masters.mtb.some(m => m.code === row[3] && m.is_active !== false))
+        errors.push('機械メーカーコードがマスタに存在しないか無効');
+      if (row[5] && !masters.countries.some(m => m.code === row[5] && m.is_active !== false))
+        errors.push('輸出先国コードがISO2マスタに存在しないか無効');
+    }
     row.forEach((v, i) => { if (v.length > LIMITS[i]) errors.push(LABELS[i] + 'が長すぎます'); });
     const serial = normalizeSerial(row[0]);
     if (serial) {
@@ -172,7 +184,8 @@ function check() {
     values.push(row);
   });
   const ok = !messages.length;
-  summary.textContent = '合計 ' + values.length + ' 行 / 行エラー ' + bad + ' 行 / ' + (ok ? '出力可能' : 'CSV出力不可');
+  summary.textContent = '合計 ' + values.length + ' 行 / 行エラー ' + bad + ' 行 / ' +
+    (mode === 'csv' ? (ok ? 'CSV出力可能（暫定）' : 'CSV出力不可') : (ok ? '下書き追加可能' : '下書き追加不可'));
   alerts.textContent = messages.join('\n');
   return ok ? {company, service, values} : null;
 }
@@ -194,7 +207,7 @@ function csvCell(value) {
   return '"' + text.replace(/"/g, '""') + '"';
 }
 function exportCsv() {
-  const valid = check();
+  const valid = check('csv');
   if (!valid) return;
   const rows = [HEADERS, ...valid.values.map(row => [valid.company, valid.service, ...row])];
   const csv = '\ufeff' + rows.map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
@@ -208,6 +221,35 @@ function exportCsv() {
   anchor.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+async function saveToDrafts() {
+  const button = document.getElementById('bulk-save-drafts');
+  button.disabled = true;
+  try {
+    const masters = await loadMasters();
+    const valid = check('draft', masters);
+    if (!valid) return;
+    const question = valid.values.length + '件を、このブラウザのNCサービス情報登録システムの「下書き」に追加します。' +
+      '\n会社名とサービス拠点名は保存対象外です。\nG-DataHub本番DBには登録しません。続けますか？';
+    if (!window.confirm(question)) return;
+    const records = valid.values.map(row => {
+      const record = createNewRecord(row[0]);
+      FIELDS.forEach((field, i) => { record[field] = row[i]; });
+      return record;
+    });
+    const count = addDraftBatch(records);
+    summary.textContent = count + '件を下書きに保存しました。既存の画面から編集できます。';
+    alerts.textContent = '';
+    const next = document.createElement('a');
+    next.href = 'index.html';
+    next.textContent = 'NCサービス情報登録システムを開く →';
+    summary.append(' ', next);
+  } catch (e) {
+    alerts.textContent = '下書き保存できませんでした：' + String(e.message || e);
+  } finally {
+    button.disabled = false;
+  }
+}
+document.getElementById('bulk-save-drafts').addEventListener('click', saveToDrafts);
 document.getElementById('bulk-add').addEventListener('click', () => addRow());
 document.getElementById('bulk-check').addEventListener('click', check);
 document.getElementById('bulk-export').addEventListener('click', exportCsv);
