@@ -24,7 +24,9 @@
 
 `company_name,service_base_name,nc_serial_no,machine_serial_no,machine_model,mtb_code,end_user,export_country_code`
 
-CSVに会社名とサービス拠点名を含める設計ですが、これらの正式なカラム対応・必須条件は未確定です。CSVはレビュー/試験用途に限定し、正式な取り込みはスキーマ決定と照合後に実装してください。既存画面への連携は「下書きに追加」操作でのみ実行します。\n\n正式仕様との照合結果・未確定事項：[`docs/bulk_registration_spec_alignment.md`](docs/bulk_registration_spec_alignment.md)
+CSVに会社名とサービス拠点名を含める設計ですが、これらの正式なカラム対応・必須条件は未確定です。CSVはレビュー/試験用途に限定し、正式な取り込みはスキーマ決定と照合後に実装してください。既存画面への連携は「下書きに追加」操作でのみ実行します。
+
+正式仕様との照合結果・未確定事項：[`docs/bulk_registration_spec_alignment.md`](docs/bulk_registration_spec_alignment.md)
 
 ---
 
