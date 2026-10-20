@@ -53,6 +53,38 @@ export function saveDraft(draft) {
   localStorage.setItem(STORAGE_KEY_DRAFTS, JSON.stringify(drafts));
 }
 
+/** Stage multiple new NC records as browser-local drafts in one storage write.
+ *  This does not write to the G-DataHub server or the SQL Server database. */
+export function addDraftBatch(records) {
+  if (!Array.isArray(records) || records.length === 0) {
+    throw new Error('追加する機械情報がありません。');
+  }
+  const currentDrafts = getDrafts();
+  const currentRecords = getRecords();
+  const normalize = value => String(value ?? '').trim().toLocaleUpperCase('en-US');
+  const seen = new Set([...currentRecords, ...currentDrafts].map(r => normalize(r.nc_serial_no)));
+  const now = new Date().toISOString();
+  const additions = records.map(record => {
+    const serial = String(record.nc_serial_no ?? '').trim();
+    const normalized = normalize(serial);
+    if (!normalized) throw new Error('NCシリアル番号が未入力です。');
+    if (serial.length > 60) throw new Error('NCシリアル番号が60文字を超えています。');
+    if (seen.has(normalized)) throw new Error('NCシリアル番号「' + serial + '」が登録済みまたは今回の追加分と重複しています。');
+    seen.add(normalized);
+    return {
+      ...createNewRecord(serial),
+      ...record,
+      nc_serial_no: serial,
+      registration_status: '下書き',
+      created_at: now,
+      updated_at: now,
+    };
+  });
+  // Single setItem avoids partial per-row commits if storage write fails.
+  localStorage.setItem(STORAGE_KEY_DRAFTS, JSON.stringify([...currentDrafts, ...additions]));
+  return additions.length;
+}
+
 export function deleteDraft(nc_serial_no) {
   const drafts = getDrafts().filter(d => d.nc_serial_no !== nc_serial_no);
   localStorage.setItem(STORAGE_KEY_DRAFTS, JSON.stringify(drafts));
